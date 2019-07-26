@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<queries xmlns="http://schemas.haulmont.com/cuba/rest-queries.xsd">
+    <query name="getSubmission" entity="rioc_Submission" view="submission-view">
+        <jpql><![CDATA[select o from rioc_Submission o where o.uniqueIdList = :uniqueIdList]]></jpql>
+        <params>
+            <param name="uniqueIdList" type="java.lang.String"/>
+        </params>
+    </query>
+    <query name="getSplitMap" entity="rioc_SplitMaps" view="splitmap-view">
+        <jpql><![CDATA[select o from rioc_SplitMaps o where o.id = :id]]></jpql>
+        <params>
+            <param name="id" type="java.util.UUID"/>
+        </params>
+    </query>
+
+</queries>

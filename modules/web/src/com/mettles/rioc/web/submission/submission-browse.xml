@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/screen/window.xsd"
+        caption="msg://browseCaption"
+        focusComponent="submissionsTable"
+        messagesPack="com.mettles.rioc.web.submission">
+    <data readOnly="true">
+        <collection id="submissionsDc"
+                    class="com.mettles.rioc.entity.Submission"
+                    view="submission-view">
+            <loader id="submissionsDl">
+                <query>
+                    <![CDATA[select e from rioc_Submission e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="submissionsTable"
+            spacing="true">
+        <filter id="filter"
+                applyTo="submissionsTable"
+                dataLoader="submissionsDl">
+            <properties include=".*"/>
+        </filter>
+        <groupTable id="submissionsTable"
+                    width="100%"
+                    multiselect="true"
+                    dataContainer="submissionsDc">
+            <actions>
+                <action id="create" type="create"/>
+                <action id="edit" type="edit"/>
+                <action id="remove" type="remove"/>
+                <action id="refresh" type="refresh"/>
+                <action id="excel" type="excel"/>
+
+            </actions>
+            <columns>
+                <column id="title"/>
+                <column id="purposeOfSubmission"/>
+                <column id="esMDClaimID"/>
+                <column id="intendedRecepient" />
+                <column id="esmdCaseId"/>
+                <column id="esmdTransactionId"/>
+                <column id="uniqueIdList" visible="false"/>
+                <column id="transactionIdList" />
+                 <column id="stage" visible="false"/>
+                <column id="status" visible="false"/>
+
+             </columns>
+            <rowsCount/>
+            <buttonsPanel id="buttonsPanel"
+                          alwaysVisible="true">
+                <button id="createBtn" action="submissionsTable.create"/>
+                <button id="editBtn" action="submissionsTable.edit"/>
+                <button id="removeBtn" action="submissionsTable.remove"/>
+                <button id="refreshBtn" action="submissionsTable.refresh"/>
+                <button id="excelBtn" action="submissionsTable.excel"/>
+                <button id="export"  caption="Export" />
+            </buttonsPanel>
+        </groupTable>
+        <hbox id="lookupActions" spacing="true" visible="false">
+            <button action="lookupSelectAction"/>
+            <button action="lookupCancelAction"/>
+        </hbox>
+    </layout>
+</window>

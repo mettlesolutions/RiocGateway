@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/screen/window.xsd"
+        caption="msg://editorCaption"
+        focusComponent="form"
+        messagesPack="com.mettles.rioc.web.providers">
+    <data>
+        <instance id="providersDc"
+                  class="com.mettles.rioc.entity.Providers"
+                  view="provider-view">
+        <loader id="providersDl">
+        </loader>
+              <instance id="submissionDc" property="submissionID" >
+                  <collection id="errorDc" property="error" />
+                  <collection id="notificationSlotDc" property="notificationSlot"/>
+                  <collection id="statusChangeDc" property="statusChange"/>
+                  <collection id="documentDc" property="document"/>
+        </instance>
+        </instance>
+    </data>
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="scrollBox" spacing="true">
+    <scrollBox id="scrollBox" spacing="true">
+
+        <form id="form" dataContainer="providersDc">
+            <column width="250px">
+                <textField id="nameField" property="name"/>
+                <textField id="provider_npiField" property="provider_npi"/>
+                <checkBox id="registered_for_emdrField" property="registered_for_emdr" visible="false"/>
+                <lookupField id="TransTypeField" property="last_submitted_transaction" caption ="Transaction Type"/>
+                <textField id="addr1Field" property="addrLine1" caption="Street Address 1"/>
+                <textField id="addr2Field" property="addrLine2" caption="Street Address 2"/>
+                <textField id="cityField" property="city" caption="City"/>
+                <textField id="stateField" property="state" caption="State"/>
+                <textField id="zipField" property="zipcode" caption="ZipCode"/>
+
+
+            </column>
+        </form>
+
+        <tabSheet>
+            <tab id="tab1"
+                 caption="Information"
+                 margin="true"
+                 spacing="true">
+                <groupBox id="errorBox" caption="msg://com.mettles.rioc.entity/Submission.error">
+                    <table id="errorTable" dataContainer="errorDc" width="100%" height="200px" editable="false">
+
+                        <columns>
+                            <column id="errorCode"/>
+                            <column id="severity"/>
+                            <column id="codeContext"/>
+                            <column id="description"/>
+                            <column id="esmdTransactionId"/>
+                        </columns>
+
+                    </table>
+                </groupBox>
+                <groupBox id="statusChangesBox" caption="msg://com.mettles.rioc.entity/Submission.statusChange">
+                    <table id="statusChangesTable" dataContainer="statusChangeDc" width="100%" height="200px" editable="false">
+                        <columns>
+                            <column id="status"/>
+                            <column id="createTs"/>
+                            <column id="result"/>
+                            <column id="splitInformation"/>
+                            <column id="esmdTransactionId"/>
+                        </columns>
+                    </table>
+                </groupBox>
+            </tab>
+            <tab id="tab2"
+                 caption="NotificationDetails"
+                 margin="true"
+                 spacing="true">
+                <groupBox id="notificationSlotsBox" caption="msg://com.mettles.rioc.entity/Submission.notificationSlot">
+                    <table id="notificationSlotsTable" dataContainer="notificationSlotDc" width="100%" height="200px" editable="false">
+
+                        <columns>
+                            <column id="field"/>
+                            <column id="value"/>
+                            <column id="splitInformation"/>
+                            <column id="createTs"/>
+                        </columns>
+
+                    </table>
+                </groupBox>
+            </tab>
+        </tabSheet>
+    </scrollBox>
+        <hbox id="editActions" spacing="true">
+            <button action="windowCommitAndClose"/>
+            <button action="windowCommit"/>
+            <button action="windowClose"/>
+        </hbox>
+        <button id="btnsubmit" width="200px" caption="Submit Registration" invoke="onBtnsubmitClick"
+        />
+    </layout>
+</window>

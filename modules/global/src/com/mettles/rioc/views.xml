@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<views xmlns="http://schemas.haulmont.com/cuba/view.xsd">
+
+    <view entity="rioc_Error" name="Error-View" extends="_local">
+        <property name="createTs"/>
+        <property name="createdBy"/>
+        <property name="updateTs"/>
+        <property name="updatedBy"/>
+    </view>
+    <view entity="rioc_NotificationSlot" name="notification-view" extends="_local">
+           <property name="field"/>
+           <property name="value"/>
+           <property name="splitInformation"/>
+           <property name="createTs"/>
+    </view>
+    <view entity="rioc_StatusChange" name="status-view" extends="_local">
+        <property name="status"/>
+        <property name="createTs"/>
+        <property name="result"/>
+        <property name="splitInformation"/>
+        <property name="esmdTransactionId"/>
+    </view>
+    <view entity="rioc_Document" name="document-view" extends="_local">
+        <property name="fileDescriptor" view="filedescriptor-view"/>
+    </view>
+    <view entity="rioc_Recepient" name="IntendedRecepient" extends="_local"/>
+    <view entity="rioc_LineofBusiness" name="LineOfBusiness-view" extends="_local"/>
+    <view entity="rioc_Submission" name="submission-view" extends="_local">
+        <property name="intendedRecepient" view="IntendedRecepient"/>
+        <property name="purposeOfSubmission" view="LineOfBusiness-view"/>
+        <property name="error" view="Error-View"/>
+        <property name="notificationSlot" view="notification-view"/>
+        <property name="statusChange" view="status-view"/>
+        <property name="hIHConfig" view="_minimal"/>
+        <property name="document" view="document-view"/>
+    </view>
+    <view entity="sys$FileDescriptor" name="filedescriptor-view" extends="_local"/>
+    <view entity="rioc_HIHConfiguration" name="HIHConfig-view" extends="_local"/>
+    <view entity="rioc_SplitMaps" name="splitmap-view" extends="_local">
+        <property name="submissionId" view="submission-view"/>
+    </view>
+    <view entity="rioc_providers" name="provider-view" extends="_local">
+        <property name="submissionID" fetch="AUTO" view="submission-view"/>
+    </view>
+
+
+</views>

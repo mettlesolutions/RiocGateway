@@ -1,0 +1,309 @@
+
+buildscript {
+    ext.cubaVersion = '7.0.8'
+    repositories {
+        maven {
+            url 'https://dl.bintray.com/cuba-platform/main'
+           
+        }
+        jcenter()
+
+     flatDir { dirs 'c:\\connectlibs' }
+    }
+    dependencies {
+        classpath "com.haulmont.gradle:cuba-plugin:$cubaVersion"
+    }
+}
+
+def modulePrefix = 'app'
+
+def globalModule = project(":${modulePrefix}-global")
+def coreModule = project(":${modulePrefix}-core")
+def webModule = project(":${modulePrefix}-web")
+def portalModule = project(":${modulePrefix}-portal")
+
+def servletApi = 'javax.servlet:javax.servlet-api:3.1.0'
+
+apply(plugin: 'cuba')
+
+cuba {
+    artifact {
+        group = 'com.mettles.rioc'
+        version = '0.1'
+        isSnapshot = true
+    }
+    tomcat {
+        dir = "$project.rootDir/deploy/tomcat"
+    }
+}
+
+dependencies {
+    appComponent("com.haulmont.cuba:cuba-global:$cubaVersion")
+    appComponent("com.haulmont.addon.globalevents:cubaglevt-global:0.4.0")
+    appComponent("com.haulmont.reports:reports-global:$cubaVersion")
+
+}
+
+def mysql = 'mysql:mysql-connector-java:5.1.46'
+
+configure([globalModule, coreModule, webModule, portalModule]) {
+    apply(plugin: 'java')
+    apply(plugin: 'maven')
+    apply(plugin: 'cuba')
+
+    dependencies {
+        testCompile('junit:junit:4.12')
+    }
+
+    task sourceJar(type: Jar) {
+        from file('src')
+        classifier = 'sources'
+    }
+
+    artifacts {
+        archives sourceJar
+    }
+}
+
+configure(globalModule) {
+    dependencies {
+        if (!JavaVersion.current().isJava8()) {
+            runtime('javax.xml.bind:jaxb-api:2.3.1')
+            runtime('org.glassfish.jaxb:jaxb-runtime:2.3.1')
+        }
+        runtime 'org.reactivestreams:reactive-streams:1.0.1'
+    }
+
+    entitiesEnhancing {
+        main {
+            enabled = true
+        }
+    }
+}
+
+configure(coreModule) {
+
+    configurations {
+        jdbc
+        dbscripts
+    }
+
+    dependencies {
+        compile('com.mettles.thirdparty:CONNECTCommonTypesLib-5.1.0')
+        compile('com.mettles.thirdparty:CONNECTCommonTypesLib-5.2.0-SNAPSHOT')
+        compile('com.mettles.thirdparty:CONNECTCoreLib-5.1.2')
+        compile('com.mettles.thirdparty:DocumentSubmissionCore-5.1.2')
+        compile('com.mettles.thirdparty:DocumentSubmissionWebervices-5.1.0')
+        compile('com.mettles.thirdparty:esMDCommons-1.1')
+        compile('com.mettles.thirdparty:emdr')
+        compile('com.mettles.thirdparty:x12278')
+        compile group: 'commons-configuration', name: 'commons-configuration', version: '1.9'
+        compile group: 'org.apache.cxf', name: 'cxf-rt-frontend-jaxws', version: '3.0.1'
+        compile group: 'org.apache.cxf', name: 'cxf-rt-transports-http', version: '3.0.3'
+        compile group: 'org.apache.axis2', name: 'axis2', version: '1.7.6'
+        compile group: 'org.sejda', name: 'sambox', version: '1.1.55'
+        compile group: 'org.sejda', name: 'sejda-model', version: '3.2.76'
+        compile group: 'org.sejda', name: 'sejda-core', version: '3.2.76'
+        compile group: 'org.sejda', name: 'sejda-sambox', version: '3.2.76'
+        compile group: 'com.itextpdf', name: 'itextpdf', version: '5.5.13.1'
+        compile group: 'org.databene', name: 'databene-commons', version: '1.0.11'
+        compile 'joda-time:joda-time:2.10.1'
+        compile(globalModule)
+        compileOnly(servletApi)
+        jdbc(mysql)
+        testRuntime(mysql)
+    }
+
+    task cleanConf(description: 'Cleans up conf directory') {
+        doLast {
+            def dir = new File(cuba.tomcat.dir, "/conf/${modulePrefix}-core")
+            if (dir.isDirectory()) {
+                ant.delete(includeemptydirs: true) {
+                    fileset(dir: dir, includes: '**/*', excludes: 'local.app.properties')
+                }
+            }
+        }
+    }
+
+    task deploy(dependsOn: [assemble, cleanConf], type: CubaDeployment) {
+        appName = "${modulePrefix}-core"
+        appJars(modulePrefix + '-global', modulePrefix + '-core')
+    }
+
+    task createDb(dependsOn: assembleDbScripts, description: 'Creates local database', type: CubaDbCreation) {
+        dbms = 'mysql'
+        host = 'localhost:3306'
+        dbName = 'rioc'
+        dbUser = 'root'
+        dbPassword = 'mettles'
+        connectionParams = '?allowPublicKeyRetrieval=true&useSSL=false&allowMultiQueries=true&serverTimezone=UTC'
+    }
+
+    task updateDb(dependsOn: assembleDbScripts, description: 'Updates local database', type: CubaDbUpdate) {
+        dbms = 'mysql'
+        host = 'localhost:3306'
+        dbName = 'rioc'
+        dbUser = 'root'
+        dbPassword = 'mettles'
+        connectionParams = '?allowPublicKeyRetrieval=true&useSSL=false&allowMultiQueries=true&serverTimezone=UTC'
+    }
+}
+
+configure(webModule) {
+    configurations {
+        webcontent
+    }
+
+    dependencies {
+        compileOnly(servletApi)
+        compile(globalModule)
+    }
+
+    task webArchive(type: Zip) {
+        from file("$buildDir/web")
+        from file('web')
+        classifier = 'web'
+    }
+
+    artifacts {
+        archives webArchive
+    }
+
+    task deployConf(type: Copy) {
+        from file('src')
+        include "com/mettles/rioc/**"
+        into "$cuba.tomcat.dir/conf/${modulePrefix}"
+    }
+
+    task clearMessagesCache(type: CubaClearMessagesCache) {
+        appName = "${modulePrefix}"
+    }
+    deployConf.dependsOn clearMessagesCache
+
+    task cleanConf(description: 'Cleans up conf directory') {
+        doLast {
+            def dir = new File(cuba.tomcat.dir, "/conf/${modulePrefix}")
+            if (dir.isDirectory()) {
+                ant.delete(includeemptydirs: true) {
+                    fileset(dir: dir, includes: '**/*', excludes: 'local.app.properties')
+                }
+            }
+        }
+    }
+
+    task deploy(dependsOn: [assemble, cleanConf], type: CubaDeployment) {
+        appName = "${modulePrefix}"
+        appJars(modulePrefix + '-global', modulePrefix + '-web')
+    }
+}
+
+configure(portalModule) {
+    dependencies {
+        compileOnly(servletApi)
+        compile(globalModule)
+    }
+
+    def webappName = "${modulePrefix}-portal"
+    def resourcesDir = "$cuba.tomcat.dir/webapps/$webappName/resources"
+    def ftlDir = "$cuba.tomcat.dir/webapps/$webappName/WEB-INF/templates"
+
+    task deploy(dependsOn: assemble, type: CubaDeployment) {
+        appName = webappName
+        appJars(modulePrefix + '-global', modulePrefix + '-portal')
+    }
+
+    task deployStatic() {
+        doLast {
+            copy {
+                from file('web/resources')
+                include '**/*.css'
+                include '**/*.js'
+                include '**/*.png'
+                include '**/*.gif'
+                include '**/*.jpg'
+                into resourcesDir
+            }
+            copy {
+                from file('web/WEB-INF/templates')
+                include '**/*.ftl'
+                into ftlDir
+            }
+        }
+    }
+
+    task cleanStatic() {
+        doLast {
+            delete resourcesDir
+            delete ftlDir
+        }
+    }
+
+    task webArchive(type: Zip) {
+        from file('web')
+        from file("$buildDir/web")
+        exclude '**/web.xml', '**/app.properties'
+        classifier = 'web'
+    }
+
+    artifacts {
+        archives webArchive
+    }
+}
+
+task undeploy(type: Delete, dependsOn: ":${modulePrefix}-web:cleanConf") {
+    delete("$cuba.tomcat.dir/shared")
+    delete("$cuba.tomcat.dir/webapps/${modulePrefix}-core")
+    delete("$cuba.tomcat.dir/webapps/${modulePrefix}")
+    delete("$cuba.tomcat.dir/webapps/${modulePrefix}-portal")
+}
+
+task restart(dependsOn: ['stop', ":${modulePrefix}-core:deploy", ":${modulePrefix}-web:deploy", ":${modulePrefix}-portal:deploy"], description: 'Redeploys applications and restarts local Tomcat') {
+    doLast {
+        ant.waitfor(maxwait: 6, maxwaitunit: 'second', checkevery: 2, checkeveryunit: 'second') {
+            not {
+                socket(server: 'localhost', port: '8787')
+            }
+        }
+        start.execute()
+    }
+}
+
+task buildWar(type: CubaWarBuilding) {
+    singleWar = false
+    appProperties = ['cuba.automaticDatabaseUpdate': true]
+    appHome = 'C:/Users/paddu/app_home'
+    doLast {
+        copy {
+            from 'jboss-deployment-structure.xml'
+            into "${project.buildDir}/buildWar/core/war/META-INF/"
+        }
+        copy {
+            from 'jboss-deployment-structure.xml'
+            into "${project.buildDir}/buildWar/web/war/META-INF/"
+        }
+    }
+}
+
+def warDist = "${project.buildDir}/distributions/war"
+task unpack(type: Copy) {
+    def appCoreWar = file("$warDist/app-core.war")
+
+    from zipTree(appCoreWar)
+    into file("$warDist/app-core/")
+}
+unpack.mustRunAfter buildWar
+
+task copyJbossConf(type: Copy) {
+    from file('jboss-deployment-structure.xml')
+    into "$warDist/app-core/META-INF"
+}
+copyJbossConf.mustRunAfter unpack
+
+task pack(type: Zip) {
+    from fileTree("$warDist/app-core/")
+    archiveName "app-core.war"
+    destinationDir(file("$warDist/"))
+}
+pack.mustRunAfter copyJbossConf
+
+task jbossWar(description: 'Copies jboss config into WAR', dependsOn: [buildWar, unpack, copyJbossConf, pack])

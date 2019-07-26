@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/screen/window.xsd"
+        caption="msg://browseCaption"
+        focusComponent="providersesTable"
+        messagesPack="com.mettles.rioc.web.providers">
+    <data readOnly="true">
+        <collection id="providersesDc"
+                    class="com.mettles.rioc.entity.Providers"
+                    view="provider-view">
+            <loader id="providersesDl">
+                <query>
+                    <![CDATA[select e from rioc_providers e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="providersesTable"
+            spacing="true">
+        <filter id="filter"
+                applyTo="providersesTable"
+                dataLoader="providersesDl">
+            <properties include=".*"/>
+        </filter>
+        <groupTable id="providersesTable"
+                    width="100%"
+                    dataContainer="providersesDc">
+            <actions>
+                <action id="create" type="create"/>
+                <action id="edit" type="edit"/>
+                <action id="remove" type="remove"/>
+            </actions>
+            <columns>
+                <column id="submissionID"/>
+                <column id="name"/>
+                <column id="provider_npi"/>
+            </columns>
+            <rowsCount/>
+            <buttonsPanel id="buttonsPanel"
+                          alwaysVisible="true">
+                <button id="createBtn" action="providersesTable.create"/>
+                <button id="editBtn" action="providersesTable.edit"/>
+                <button id="removeBtn" action="providersesTable.remove"/>
+            </buttonsPanel>
+        </groupTable>
+        <hbox id="lookupActions" spacing="true" visible="false">
+            <button action="lookupSelectAction"/>
+            <button action="lookupCancelAction"/>
+        </hbox>
+    </layout>
+</window>

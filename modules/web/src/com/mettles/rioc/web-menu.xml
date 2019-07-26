@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<menu-config xmlns="http://schemas.haulmont.com/cuba/menu.xsd">
+    <menu id="application-rioc" insertBefore="administration">
+        <item screen="rioc_Recepient.browse"/>
+        <item screen="rioc_LineofBusiness.browse"/>
+        <item screen="rioc_HIHConfiguration.browse"/>
+        <item screen="rioc_Submission.browse"/>
+        <item screen="rioc_providers.browse"/>
+    </menu>
+</menu-config>

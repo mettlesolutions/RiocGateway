@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/screen/window.xsd"
+        caption="msg://browseCaption"
+        focusComponent="recepientsTable"
+        messagesPack="com.mettles.rioc.web.recepient">
+    <data readOnly="true">
+        <collection id="recepientsDc"
+                    class="com.mettles.rioc.entity.Recepient"
+                    view="_local">
+            <loader id="recepientsDl">
+                <query>
+                    <![CDATA[select e from rioc_Recepient e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="recepientsTable"
+            spacing="true">
+        <filter id="filter"
+                applyTo="recepientsTable"
+                dataLoader="recepientsDl">
+            <properties include=".*"/>
+        </filter>
+        <groupTable id="recepientsTable"
+                    width="100%"
+                    dataContainer="recepientsDc">
+            <actions>
+                <action id="create" type="create"/>
+                <action id="edit" type="edit"/>
+                <action id="remove" type="remove"/>
+            </actions>
+            <columns>
+                <column id="intendedRecepient"/>
+                <column id="oid"/>
+            </columns>
+            <rowsCount/>
+            <buttonsPanel id="buttonsPanel"
+                          alwaysVisible="true">
+                <button id="createBtn" action="recepientsTable.create"/>
+                <button id="editBtn" action="recepientsTable.edit"/>
+                <button id="removeBtn" action="recepientsTable.remove"/>
+            </buttonsPanel>
+        </groupTable>
+        <hbox id="lookupActions" spacing="true" visible="false">
+            <button action="lookupSelectAction"/>
+            <button action="lookupCancelAction"/>
+        </hbox>
+    </layout>
+</window>

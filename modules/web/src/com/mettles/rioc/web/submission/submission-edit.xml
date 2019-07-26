@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/screen/window.xsd"
+        caption="msg://editorCaption"
+        focusComponent="form"
+        messagesPack="com.mettles.rioc.web.submission">
+    <data>
+        <instance id="submissionDc"
+                  class="com.mettles.rioc.entity.Submission"
+                  view="submission-view">
+            <loader id="submissionDl">
+            </loader>
+            <collection id="errorDc" property="error" />
+            <collection id="notificationSlotDc" property="notificationSlot"/>
+            <collection id="statusChangeDc" property="statusChange"/>
+            <collection id="documentDc" property="document"/>
+        </instance>
+        <collection id="intendedRecepientsDc" class="com.mettles.rioc.entity.Recepient" view="IntendedRecepient">
+            <loader id="intendedRecepientsLc">
+                <query>
+                    <![CDATA[select e from rioc_Recepient e]]>
+                </query>
+            </loader>
+        </collection>
+        <collection id="purposeOfSubmissionsDc" class="com.mettles.rioc.entity.LineofBusiness" view="LineOfBusiness-view">
+            <loader id="purposeOfSubmissionsLc">
+                <query>
+                    <![CDATA[select e from rioc_LineofBusiness e]]>
+                </query>
+            </loader>
+        </collection>
+        <collection id="hIHConfigsDc" class="com.mettles.rioc.entity.HIHConfiguration" view="_minimal">
+            <loader id="hIHConfigsLc">
+                <query>
+                    <![CDATA[select e from rioc_HIHConfiguration e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="scrollBox" spacing="true">
+        <scrollBox id="scrollBox" spacing="true">
+            <form id="form" dataContainer="submissionDc">
+                <column width="250px">
+                    <textField id="patientAddressZipField" property="patientAddressZip" visible="false"/>
+                    <textField id="lastNameField" property="lastName"  visible="false"/>
+                    <lookupPickerField id="intendedRecepientField" optionsContainer="intendedRecepientsDc"
+                                       property="intendedRecepient">
+                        <actions>
+                            <action id="lookup" type="picker_lookup"/>
+                        </actions>
+                    </lookupPickerField>
+                    <textArea id="messageField" property="message" rows="5"  visible="false"/>
+                    <checkBox id="isNonClaimantField" property="isNonClaimant"  visible="false"/>
+                    <textField id="firstNameField" property="firstName"  visible="false"/>
+                    <checkBox id="hasFirstWitnessSignatureField" property="hasFirstWitnessSignature"  visible="false"/>
+                    <textField id="middleNameField" property="middleName"  visible="false"/>
+                    <textArea id="commentsField" property="comments" rows="5"/>
+                    <dateField id="dateOfBirthField" property="dateOfBirth"  visible="false"/>
+                    <checkBox id="isSampleField" property="isSample"  visible="false"/>
+                    <textField id="patientAddressCityField" property="patientAddressCity" visible="false"/>
+                    <lookupField id="authorTypeField" property="authorType"/>
+                    <textField id="phonenumberField" property="phonenumber"  visible="false"/>
+                    <checkBox id="hasSecondWitnessSignatureField" property="hasSecondWitnessSignature"  visible="false"/>
+                    <textField id="patientAddressField" property="patientAddress"  visible="false"/>
+                    <textField id="socialSecurityNumberField" property="socialSecurityNumber"  visible="false"/>
+                    <textField id="patientAddressStreetField" property="patientAddressStreet"  visible="false"/>
+                    <textField id="authorNPIField" property="authorNPI"/>
+                    <checkBox id="hasSignatureOfPatientField" property="hasSignatureOfPatient"  visible="false"/>
+                    <textField id="stageField" property="stage" editable="false"/>
+                    <textField id="titleField" property="title"/>
+                    <lookupPickerField id="purposeOfSubmissionField" optionsContainer="purposeOfSubmissionsDc"
+                                       property="purposeOfSubmission">
+                        <actions>
+                            <action id="lookup" type="picker_lookup"/>
+                        </actions>
+                    </lookupPickerField>
+                    <textField id="esMDClaimIDField" property="esMDClaimID"/>
+                    <textField id="statusField" property="status"  editable="false"/>
+                    <textField id="patientAddressStateField" property="patientAddressState"  visible="false"/>
+                    <checkBox id="hasMessageField" property="hasMessage"  visible="false"/>
+                    <textField id="esmdCaseIdField" property="esmdCaseId" />
+                    <textField id="esmdTransactionIdField" property="esmdTransactionId" editable="false"/>
+                    <textField id="highestSpiltNoField" property="highestSpiltNo"  visible="false"/>
+                    <textField id="lastSubmittedSplitField" property="lastSubmittedSplit"  visible="false"/>
+                    <textField id="uniqueIdListField" property="uniqueIdList"  editable="false"/>
+                    <textField id="transactionIdListField" property="transactionIdList"  visible="false"/>
+                    <textField id="thresholdField" property="threshold"  visible="false"/>
+                    <checkBox id="autoSplitField" property="autoSplit"/>
+                    <lookupPickerField id="hIHConfigField" optionsContainer="hIHConfigsDc" property="hIHConfig">
+                        <actions>
+                            <action id="lookup" type="picker_lookup"/>
+                        </actions>
+                    </lookupPickerField>
+                </column>
+            </form>
+            <groupBox id="documentSetBox" caption="msg://com.mettles.rioc.entity/Submission.document">
+                <table id="documentSetTable" dataContainer="documentDc" width="100%" height="200px">
+                    <actions>
+                        <action id="create" type="create"/>
+                        <action id="edit" type="edit"/>
+                        <action id="remove" type="remove"/>
+                    </actions>
+                    <columns>
+                        <column id="title"/>
+                        <column id="language"/>
+                        <column id="comments"/>
+                        <column id="filename"/>
+                        <column id="splitNumber"/>
+                        <column id="fileDescriptor"/>
+                    </columns>
+                    <buttonsPanel>
+                        <button action="documentSetTable.create"/>
+                        <button action="documentSetTable.edit"/>
+                        <button action="documentSetTable.remove"/>
+                    </buttonsPanel>
+                </table>
+            </groupBox>
+            <tabSheet>
+                <tab id="tab1"
+                     caption="Information"
+                     margin="true"
+                     spacing="true">
+            <groupBox id="errorBox" caption="msg://com.mettles.rioc.entity/Submission.error">
+                <table id="errorTable" dataContainer="errorDc" width="100%" height="200px" editable="false">
+
+                    <columns>
+                        <column id="errorCode"/>
+                        <column id="severity"/>
+                        <column id="codeContext"/>
+                        <column id="description"/>
+                        <column id="esmdTransactionId"/>
+                    </columns>
+
+                </table>
+            </groupBox>
+                      <groupBox id="statusChangesBox" caption="msg://com.mettles.rioc.entity/Submission.statusChange">
+                <table id="statusChangesTable" dataContainer="statusChangeDc" width="100%" height="200px" editable="false">
+                    <columns>
+                        <column id="status"/>
+                        <column id="createTs"/>
+                        <column id="result"/>
+                        <column id="splitInformation"/>
+                        <column id="esmdTransactionId"/>
+                    </columns>
+                </table>
+            </groupBox>
+                </tab>
+                <tab id="tab2"
+                     caption="NotificationDetails"
+                     margin="true"
+                     spacing="true">
+                <groupBox id="notificationSlotsBox" caption="msg://com.mettles.rioc.entity/Submission.notificationSlot">
+                    <table id="notificationSlotsTable" dataContainer="notificationSlotDc" width="100%" height="200px" editable="false">
+
+                        <columns>
+                            <column id="field"/>
+                            <column id="value"/>
+                            <column id="splitInformation"/>
+                            <column id="createTs"/>
+                        </columns>
+
+                    </table>
+                </groupBox>
+                </tab>
+            </tabSheet>
+
+        </scrollBox>
+        <hbox id="editActions" spacing="true">
+            <button action="windowCommitAndClose"/>
+             <button action="windowCommit"/>
+            <button action="windowClose"/>
+
+        </hbox>
+        <button id="btnsubmit" width="110px" caption="Submit" disableOnClick="true" invoke="onBtnsubmitClick"
+        />
+    </layout>
+</window>

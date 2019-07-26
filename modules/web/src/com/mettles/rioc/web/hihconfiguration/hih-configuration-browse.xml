@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/screen/window.xsd"
+        caption="msg://browseCaption"
+        focusComponent="hIHConfigurationsTable"
+        messagesPack="com.mettles.rioc.web.hihconfiguration">
+    <data readOnly="true">
+        <collection id="hIHConfigurationsDc"
+                    class="com.mettles.rioc.entity.HIHConfiguration"
+                    view="_local">
+            <loader id="hIHConfigurationsDl">
+                <query>
+                    <![CDATA[select e from rioc_HIHConfiguration e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="hIHConfigurationsTable"
+            spacing="true">
+        <filter id="filter"
+                applyTo="hIHConfigurationsTable"
+                dataLoader="hIHConfigurationsDl">
+            <properties include=".*"/>
+        </filter>
+        <groupTable id="hIHConfigurationsTable"
+                    width="100%"
+                    dataContainer="hIHConfigurationsDc">
+            <actions>
+                <action id="create" type="create"/>
+                <action id="edit" type="edit"/>
+                <action id="remove" type="remove"/>
+            </actions>
+            <columns>
+                <column id="hiHName"/>
+                <column id="hIIHOid"/>
+                <column id="testRCOid"/>
+                <column id="esMDIP"/>
+                <column id="issuer"/>
+                <column id="testMode"/>
+                <column id="payloadThreshold"/>
+                <column id="hIHDescription"/>
+                <column id="esMDUrl"/>
+            </columns>
+            <rowsCount/>
+            <buttonsPanel id="buttonsPanel"
+                          alwaysVisible="true">
+                <button id="createBtn" action="hIHConfigurationsTable.create"/>
+                <button id="editBtn" action="hIHConfigurationsTable.edit"/>
+                <button id="removeBtn" action="hIHConfigurationsTable.remove"/>
+            </buttonsPanel>
+        </groupTable>
+        <hbox id="lookupActions" spacing="true" visible="false">
+            <button action="lookupSelectAction"/>
+            <button action="lookupCancelAction"/>
+        </hbox>
+    </layout>
+</window>
