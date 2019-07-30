@@ -108,6 +108,34 @@ public class ProvidersEdit extends StandardEditor<Providers> {
             dataManager.commit(currObj);
         }else {
             currObj = submissionDc.getItem();
+            if(currObj.getIntendedRecepient() == null){
+                String Recepient_oid = "2.16.840.1.113883.3.6037.2.47";
+                Recepient intdRecp = dataManager.loadValue(
+                        "select o from rioc_Recepient o " +
+                                "where o.oid = :recep ", Recepient.class)
+                        .parameter("recep", Recepient_oid)
+                        .one();
+                if (intdRecp == null) {
+                    //Show error
+                    return;
+                }
+                currObj.setIntendedRecepient(intdRecp);
+            }
+            if(currObj.getPurposeOfSubmission() == null){
+                LineofBusiness purpOfSub = null;
+                String contentType = "5";
+                purpOfSub = dataManager.loadValue(
+                        "select o from rioc_LineofBusiness o " +
+                                "where o.contentType = :purp ", LineofBusiness.class)
+                        .parameter("purp", contentType)
+                        .one();
+
+                if (purpOfSub == null) {
+                    //Show error
+                    return;
+                }
+                currObj.setPurposeOfSubmission(purpOfSub);
+            }
             providersDc.getItem().setSubmissionID(currObj);
             }
 
@@ -299,10 +327,12 @@ public class ProvidersEdit extends StandardEditor<Providers> {
     public void onUiNotificationEvent(UiNotificationEvent event) {
 
         Long recvdId = Long.parseLong(event.getMessage());
+        Long currID = submissionDc.getItem().getId();
         System.out.println("After parsing id is"+recvdId);
-        System.out.println("Current form id is"+submissionDc.getItem().getId());
+        System.out.println("Current form id is"+currID);
         Submission currItem = submissionDc.getItem();
-        if(recvdId.compareTo(submissionDc.getItem().getId()) == 0) {
+
+        if(recvdId.compareTo(currID) == 0) {
 
 
 

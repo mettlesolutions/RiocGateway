@@ -40,7 +40,7 @@
         <property name="submissionId" view="submission-view"/>
     </view>
     <view entity="rioc_providers" name="provider-view" extends="_local">
-        <property name="submissionID" fetch="AUTO" view="submission-view"/>
+        <property name="submissionID"  view="submission-view"/>
     </view>
 
 

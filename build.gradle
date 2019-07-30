@@ -1,6 +1,6 @@
 
 buildscript {
-    ext.cubaVersion = '7.0.8'
+    ext.cubaVersion = '7.0.9'
     repositories {
         maven {
             url 'https://dl.bintray.com/cuba-platform/main'
@@ -89,12 +89,12 @@ configure(coreModule) {
     }
 
     dependencies {
+        compile('com.mettles.thirdparty:esMDConnectLib-0.0.1')
+        compile('com.mettles.thirdparty:esMDCommons-1.1')
         compile('com.mettles.thirdparty:CONNECTCommonTypesLib-5.1.0')
-        compile('com.mettles.thirdparty:CONNECTCommonTypesLib-5.2.0-SNAPSHOT')
         compile('com.mettles.thirdparty:CONNECTCoreLib-5.1.2')
         compile('com.mettles.thirdparty:DocumentSubmissionCore-5.1.2')
         compile('com.mettles.thirdparty:DocumentSubmissionWebervices-5.1.0')
-        compile('com.mettles.thirdparty:esMDCommons-1.1')
         compile('com.mettles.thirdparty:emdr')
         compile('com.mettles.thirdparty:x12278')
         compile group: 'commons-configuration', name: 'commons-configuration', version: '1.9'

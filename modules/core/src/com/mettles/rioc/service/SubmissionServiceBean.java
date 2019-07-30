@@ -11,7 +11,7 @@ import com.haulmont.cuba.core.global.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Service;
-import com.mettles.rioc.core.ConnectSOAPClient;
+import com.mettles.rioc.core.DocSubmissionClient;
 
 import javax.inject.Inject;
 import java.io.*;
@@ -39,7 +39,7 @@ import org.sejda.model.parameter.SplitBySizeParameters;
 @Service(SubmissionService.NAME)
 public class SubmissionServiceBean implements SubmissionService {
     @Inject
-    private ConnectSOAPClient soapclx;
+    private DocSubmissionClient soapclx;
     @Inject
     private DataManager datamanager;
     @Inject
@@ -74,7 +74,7 @@ public class SubmissionServiceBean implements SubmissionService {
 
         Submission retVal = prov.getSubmissionID();
         System.out.println("reached rioc_submission service");
-        soapclx = AppBeans.get(ConnectSOAPClient.class);
+        soapclx = AppBeans.get(DocSubmissionClient.class);
         try {
 
             retVal = soapclx.SubmiteMDRRequest(prov,bRegister);
@@ -239,7 +239,7 @@ public class SubmissionServiceBean implements SubmissionService {
     public Submission CallConnectApi(Submission sub, String SplitStr, String parentId, ArrayList<Document> docArryList) {
         Submission retVal = sub;
         System.out.println("reached rioc_submission service");
-        soapclx = AppBeans.get(ConnectSOAPClient.class);
+        soapclx = AppBeans.get(DocSubmissionClient.class);
         try {
 
             retVal = soapclx.SoapClientCall(sub,SplitStr,parentId,docArryList);

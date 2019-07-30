@@ -339,7 +339,7 @@ public class SubmissionEdit extends StandardEditor<Submission> {
 
                     dtTemptoRem.setFileDescriptor(null);
                     documentDc.replaceItem(dtTemptoRem);
-                    commitContext.addInstanceToCommit(dtTemptoRem);
+                   // commitContext.addInstanceToCommit(dtTemptoRem);
                 }
             }
         }
