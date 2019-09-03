@@ -444,12 +444,12 @@ public class RiocCustomController {
         subTemp.setComments(lb.getComments());
 
         if(lb.getEsMD_claim_id()!= null) {
-        if(lb.getEsMD_claim_id().length() > 0) {
+        if(lb.getEsMD_claim_id().length() > 0 & purpOfSub.getIsEsmdClaimDisplayed()) {
             subTemp.setEsMDClaimID(lb.getEsMD_claim_id());
         }
         }
         if(lb.getEsmd_case_id() != null) {
-        if(lb.getEsmd_case_id().length() > 0){
+        if(lb.getEsmd_case_id().length() > 0 &  purpOfSub.getIsCaseIdDisplayed()){
                 subTemp.setEsmdCaseId(lb.getEsmd_case_id());
             }
         }

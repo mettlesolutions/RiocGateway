@@ -87,7 +87,7 @@
                     <textField id="transactionIdListField" property="transactionIdList"  visible="false"/>
                     <textField id="thresholdField" property="threshold"  visible="false"/>
                     <checkBox id="autoSplitField" property="autoSplit"/>
-                    <lookupPickerField id="hIHConfigField" optionsContainer="hIHConfigsDc" property="hIHConfig">
+                    <lookupPickerField id="hIHConfigField" optionsContainer="hIHConfigsDc" visible="false" property="hIHConfig">
                         <actions>
                             <action id="lookup" type="picker_lookup"/>
                         </actions>

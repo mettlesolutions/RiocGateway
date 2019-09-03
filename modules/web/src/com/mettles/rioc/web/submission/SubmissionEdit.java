@@ -46,6 +46,9 @@ public class SubmissionEdit extends StandardEditor<Submission> {
     Table documentSetTable;
 
     @Inject
+    private LookupPickerField<LineofBusiness> purposeOfSubmissionField;
+
+    @Inject
     TextField highestSpiltNoField;
 
     @Inject
@@ -53,6 +56,12 @@ public class SubmissionEdit extends StandardEditor<Submission> {
 
     @Inject
     private Notifications notifications;
+
+    @Inject
+    private TextField esMDClaimIDField;
+
+    @Inject
+    private TextField esmdCaseIdField;
 
 
     @Inject
@@ -89,10 +98,15 @@ public class SubmissionEdit extends StandardEditor<Submission> {
         String txt = "Submitted";
 
         Document dcTemp = null;
+        //submissionDc.getItem().setDocument(documentDc.getItems());
         Submission sub = submissionDc.getItem();
+
         ArrayList<Document> docArryListSubmit = null;
         if(sub.getDocument() == null){
             System.out.println("get document null");
+            btnsubmit.setVisible(true);
+            btnsubmit.setEnabled(true);
+            return;
         }else{
             System.out.println("get document size is"+sub.getDocument().size());
         }
@@ -110,15 +124,19 @@ public class SubmissionEdit extends StandardEditor<Submission> {
                 if(documentIterator.hasNext()) {
                     Document largeDoc = documentIterator.next();
 
+                    if(largeDoc.getFileDescriptor() == null){
+                        notifications.create().withCaption("please upload document").withType(Notifications.NotificationType.HUMANIZED).show();
+                        btnsubmit.setVisible(true);
+                        btnsubmit.setEnabled(true);
+                    }
+
                    // documentDc.getMutableItems().remove(dcTemp);
                     if(largeDoc.getFileDescriptor().getSize() > 75000000) {
                         List<Document> docArryList = AppBeans.get(SubmissionService.class).SplitDocuments(largeDoc);
                         //  documentDc.getMutableItems().remove(largeDoc);
                         if (docArryList.size() > 1) {
 
-                            //  Document dcReloaded = dataManager.reload(dcTemp,"document-view");
-                            //  dataManager.remove(dataManager.getReference(Document.class, dcTemp.getId()));
-                            //   dataManager.remove(dcReloaded);
+
                             documentDc.getMutableItems().remove(largeDoc);
                             dataManager.remove(largeDoc.getFileDescriptor());
                             try {
@@ -128,21 +146,6 @@ public class SubmissionEdit extends StandardEditor<Submission> {
                             }
 
                             dataManager.remove(largeDoc);
-
-                            //documentDc.getMutableItems().remove(dcTemp);
-
-                            // dataCnxt.remove(dcTemp.getFileDescriptor());
-
-                            //  commitContext.addInstanceToRemove(dcTemp.getFileDescriptor());
-                            //    commitContext.addInstanceToRemove(dcTemp);
-                            //   dataManager.commit(commitContext);
-                            //dataManager.remove(dcTemp);
-                            // documentSetTable.setSelected();
-                            //    documentSetTable.setSelected(largeDoc);
-
-                            //    removeAction.actionPerform(documentSetTable);
-
-                            //dataManager.remove(largeDoc);
 
 
                             Iterator<Document> doclistit = docArryList.iterator();
@@ -209,6 +212,12 @@ public class SubmissionEdit extends StandardEditor<Submission> {
             if(((Hashtable<Integer, ArrayList<Document>>) splitDocDict).containsKey(currSplitNum)){
                ArrayList<Document> docArryList = splitDocDict.get(currSplitNum);
                 Long currSize = splitSize.get(currSplitNum);
+                if(dtTemp.getFileDescriptor() == null){
+                    notifications.create().withCaption("please upload document").withType(Notifications.NotificationType.HUMANIZED).show();
+                    btnsubmit.setVisible(true);
+                    btnsubmit.setEnabled(true);
+                    return;
+                }
                 currSize = currSize + dtTemp.getFileDescriptor().getSize();
                 if(currSize > threshold){
                     System.out.println("Split size is greater than threshold");
@@ -223,6 +232,12 @@ public class SubmissionEdit extends StandardEditor<Submission> {
             }else{
                 Long size;
                 ArrayList<Document> docArryList = new ArrayList<>();
+                if(dtTemp.getFileDescriptor() == null){
+                    notifications.create().withCaption("please upload document").withType(Notifications.NotificationType.HUMANIZED).show();
+                    btnsubmit.setVisible(true);
+                    btnsubmit.setEnabled(true);
+                    return;
+                }
                 size = dtTemp.getFileDescriptor().getSize();
                 if(size > threshold){
                     System.out.println("Split size is greater than threshold");
@@ -313,13 +328,14 @@ public class SubmissionEdit extends StandardEditor<Submission> {
 
                 errorTable.setSelected(errTemp);
                 commitContext.addInstanceToCommit(errTemp);
-
+                submissionDc.getItem().setStatus("Error");
 
 
             }
 
         }else{
             System.out.println("Error Table is Empty");
+            submissionDc.getItem().setStatus("Success");
         }
        // submissionDc.setItem(sub);
         if((temp.getStatusChange().size() != 0)  || (temp.getError().size() != 0)){
@@ -353,7 +369,7 @@ public class SubmissionEdit extends StandardEditor<Submission> {
        // dataCnxt.merge(submissionDc.getItem());
         dataManager.commit(commitContext);
         if((temp.getStatusChange().size() == 0) && (temp.getError().size() == 0)){
-
+            submissionDc.getItem().setStatus("Error");
             notifications.create().withCaption("Submission Failed").withType(Notifications.NotificationType.HUMANIZED).show();
 
         }else{
@@ -372,6 +388,21 @@ public class SubmissionEdit extends StandardEditor<Submission> {
 
         // ...
     }*/
+  @Subscribe("purposeOfSubmissionField")
+  protected void onpurposeOfSubmissionFieldValueChange(HasValue.ValueChangeEvent<LineofBusiness> event) {
+    LineofBusiness selval = event.getValue();
+    if(selval.getIsCaseIdDisplayed()){
+        esmdCaseIdField.setVisible(true);
+    }else{
+        esmdCaseIdField.setVisible(false);
+    }
+      if(selval.getIsEsmdClaimDisplayed()){
+          esMDClaimIDField.setVisible(true);
+      }else{
+          esMDClaimIDField.setVisible(false);
+      }
+  }
+
 
 
     @EventListener

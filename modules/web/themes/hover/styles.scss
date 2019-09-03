@@ -1,0 +1,11 @@
+@import "hover-defaults";
+@import "com.mettles.rioc/hover-ext-defaults";
+@import "app-components";
+@import "com.mettles.rioc/hover-ext";
+
+.hover {
+  // include auto-generated app components SCSS
+  @include app_components;
+
+  @include com_mettles_rioc-hover-ext;
+}
