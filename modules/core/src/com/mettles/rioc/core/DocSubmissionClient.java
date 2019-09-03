@@ -55,8 +55,8 @@ import java.util.stream.Stream;
 public class DocSubmissionClient {
 
     public static final String NAME = "rioc_DocSubmissionClient";
-    public static final String DOCUMENT_TYPE = "application/pdf";
-    public static final String DOCUMENT_TYPE_XML = "application/xml";
+    private static final String DOCUMENT_TYPE = "application/pdf";
+    private static final String DOCUMENT_TYPE_XML = "application/xml";
 
     @Inject
     FileLoader fileLoader;
@@ -99,10 +99,10 @@ public class DocSubmissionClient {
                     List<Document> subArryList = sub.getDocument();
                     int splitNum = sub.getLastSubmittedSplit()+1;
                     subArryList.sort(Comparator.comparing(Document::getSplitNumber));
-                    Dictionary<Integer,ArrayList<Document>> splitDocDict = new Hashtable<>();
+                    Hashtable<Integer,ArrayList<Document>> splitDocDict = new Hashtable<>();
                     for (Document doc : subArryList) {
                         int currSplitNum = doc.getSplitNumber();
-                        if(((Hashtable<Integer, ArrayList<Document>>) splitDocDict).containsKey(currSplitNum)){
+                        if( splitDocDict.containsKey(currSplitNum)){
                             ArrayList<Document> docArryList = splitDocDict.get(currSplitNum);
                             docArryList.add(doc);
                             splitDocDict.put(currSplitNum,docArryList);
@@ -115,7 +115,7 @@ public class DocSubmissionClient {
                     if((splitNum > 1) && (splitNum != splitmaps.getSplitInformation())){
                         int beforeSubErrlistSize = sub.getError().size();
                         int beforeSubStatChng = sub.getStatusChange().size();
-                        int numofSplits = ((Hashtable<Integer, ArrayList<Document>>) splitDocDict).keySet().size();
+                        int numofSplits = splitDocDict.keySet().size();
                         String splitStr = splitNum +"-"+numofSplits;
                         try {
                             SoapClientCall(sub, splitStr, splitmaps.getSubmissionUniqueId(), splitDocDict.get(splitNum));
@@ -166,7 +166,7 @@ public class DocSubmissionClient {
 
     }
 
-    public Submission SoapClientCall(Submission sub, String SplitStr, String parentId, ArrayList<Document> docArryList) throws PropertyException{
+    public Submission SoapClientCall(Submission sub, String SplitStr, String parentId, ArrayList<Document> docArryList){
         String url = "http://val.mettles.com:8080/Adapter/esmd/AdapterService/AdapterDocSubmissionDeferredRequest";
         int retVal = -1;
         List <HIHConfiguration> hihConfigList = datamanager.load(HIHConfiguration.class)
@@ -226,7 +226,7 @@ public class DocSubmissionClient {
 
         //-------------------------///
         int SplitNum = docArryList.iterator().next().getSplitNumber();
-        SplitMaps newSplitMap = null;
+        SplitMaps newSplitMap ;
         try (Transaction tx = persistence.createTransaction()) {
             EntityManager em = persistence.getEntityManager();
             newSplitMap = metadata.create(SplitMaps.class);
@@ -269,15 +269,15 @@ public class DocSubmissionClient {
 
 
              String fileStr ="";
+         //   Transaction tx;
 
-
-            try(Transaction tx = persistence.createTransaction()) {
+            try( Transaction tx= persistence.createTransaction()) {
 
                 InputStream inputStream = fileLoader.openStream(tempdt.getFileDescriptor());
 
-                byte fileContent[] = new byte[3000];
-                Arrays.fill(fileContent, (byte)0);
-                int nRead = 0;
+             //   byte fileContent[] = new byte[3000];
+              //  Arrays.fill(fileContent, (byte)0);
+               // int nRead = 0;
                 //while((nRead =inputStream.read(fileContent))  > 0) {
                  //   Base64.
                    //String tempstr =   Base64.encodeBase64String(fileContent);
@@ -324,7 +324,7 @@ public class DocSubmissionClient {
         //client.enableMtom();
         try {
             ConnectSoapClient soapClient = new ConnectSoapClient();
-            SubmissionStatus substatus = soapClient.SoapClientCall(subdata,uniqueid,parentId);
+            SubmissionStatus substatus = soapClient.SoapClientCall(subdata,uniqueid,parentId,"http://val.mettles.com:8080");
             List<StatusChange> tempstchngList = sub.getStatusChange();
             if(tempstchngList == null){
                 tempstchngList = new ArrayList<>();

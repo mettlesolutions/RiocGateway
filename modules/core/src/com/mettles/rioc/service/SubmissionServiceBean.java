@@ -45,6 +45,7 @@ public class SubmissionServiceBean implements SubmissionService {
     @Inject
     private Persistence persistence;
 
+
     @Inject
     private FileLoader fileLoader;
 
@@ -75,13 +76,13 @@ public class SubmissionServiceBean implements SubmissionService {
         Submission retVal = prov.getSubmissionID();
         System.out.println("reached rioc_submission service");
         soapclx = AppBeans.get(DocSubmissionClient.class);
-        try {
+        //try {
 
             retVal = soapclx.SubmiteMDRRequest(prov,bRegister);
 
-        }catch(Exception e){
+       /* }catch(Exception e){
             System.out.println(e.toString());
-        }
+        }*/
 
 
 
