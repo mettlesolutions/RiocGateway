@@ -142,4 +142,14 @@ public class ProviderRegStatusResponseModel {
     private String submission_status;
     private String transaction_id_list;
 
+    public String getReg_status() {
+        return reg_status;
+    }
+
+    public void setReg_status(String reg_status) {
+        this.reg_status = reg_status;
+    }
+
+    private String reg_status;
+
 }

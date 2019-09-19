@@ -1,6 +1,8 @@
 package com.mettles.rioc.service;
 
+import com.mettles.rioc.X12275SubmissionStatus;
 import com.mettles.rioc.core.PDFReadWriter;
+import com.mettles.rioc.core.X12275ConnectSoapClient;
 import com.mettles.rioc.entity.Document;
 import com.mettles.rioc.entity.Providers;
 import com.mettles.rioc.entity.Recepient;
@@ -68,6 +70,14 @@ public class SubmissionServiceBean implements SubmissionService {
             tx.commit();
         }*/
         return retDocArryList;
+    }
+
+
+    @Override
+    public X12275SubmissionStatus SubmitX12275Submission(Submission sub) {
+
+        return AppBeans.get(X12275ConnectSoapClient.class).SubmitCAQHBatchSubmission(sub);
+
     }
 
     @Override

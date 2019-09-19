@@ -28,6 +28,16 @@ public class SubmissionRequestModel {
     private String fileContent;
     private String purpose_of_submission;
 
+    public boolean isbSendinX12() {
+        return bSendinX12;
+    }
+
+    public void setbSendinX12(boolean bSendinX12) {
+        this.bSendinX12 = bSendinX12;
+    }
+
+    private boolean bSendinX12;
+
 
 
 

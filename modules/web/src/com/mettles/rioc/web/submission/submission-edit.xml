@@ -75,18 +75,20 @@
                             <action id="lookup" type="picker_lookup"/>
                         </actions>
                     </lookupPickerField>
-                    <textField id="esMDClaimIDField" property="esMDClaimID"/>
+                    <textField id="esMDClaimIDField" property="esMDClaimID" caption = "Claim ID"/>
                     <textField id="statusField" property="status"  editable="false"/>
                     <textField id="patientAddressStateField" property="patientAddressState"  visible="false"/>
                     <checkBox id="hasMessageField" property="hasMessage"  visible="false"/>
-                    <textField id="esmdCaseIdField" property="esmdCaseId" />
-                    <textField id="esmdTransactionIdField" property="esmdTransactionId" editable="false"/>
+                    <textField id="esmdCaseIdField" property="esmdCaseId" caption = "Case ID" />
+                    <textField id="esmdTransactionIdField" property="esmdTransactionId" editable="false" caption = "Transaction ID"/>
                     <textField id="highestSpiltNoField" property="highestSpiltNo"  visible="false"/>
                     <textField id="lastSubmittedSplitField" property="lastSubmittedSplit"  visible="false"/>
-                    <textField id="uniqueIdListField" property="uniqueIdList"  editable="false"/>
+                    <textField id="uniqueIdListField" property="uniqueIdList"  editable="false" caption="Unique ID List"/>
                     <textField id="transactionIdListField" property="transactionIdList"  visible="false"/>
                     <textField id="thresholdField" property="threshold"  visible="false"/>
                     <checkBox id="autoSplitField" property="autoSplit"/>
+                    <checkBox id="bSendinX12Field" property="bSendinX12" visible="false" caption = "Send in X12"/>
+
                     <lookupPickerField id="hIHConfigField" optionsContainer="hIHConfigsDc" visible="false" property="hIHConfig">
                         <actions>
                             <action id="lookup" type="picker_lookup"/>

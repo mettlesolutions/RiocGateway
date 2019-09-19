@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public class DocumentPrepare {
 
-    public String getContent(String base64FileContent,String mimetype){
+    public static String getContent(String base64FileContent,String mimetype){
         String recordContent="<ClinicalDocument xmlns=\"urn:hl7-org:v3\"\n" +
                 "                  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                 "                  classCode=\"DOCCLIN\" moodCode=\"EVN\" xsi:schemaLocation=\"urn:hl7-org:v3 CDA.xsd\">\n" +

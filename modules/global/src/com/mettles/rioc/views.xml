@@ -42,6 +42,12 @@
     <view entity="rioc_providers" name="provider-view" extends="_local">
         <property name="submissionID"  view="submission-view"/>
     </view>
+    <view entity="rioc_State" name="state-view" extends="_local"/>
+
+
+    <view entity="rioc_Address" name="address-view" extends="_local">
+        <property name="state"  view="state-view"/>
+    </view>
 
 
 </views>

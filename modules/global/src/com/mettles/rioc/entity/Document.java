@@ -31,7 +31,7 @@ public class Document extends BaseUuidEntity implements Versioned, Updatable, Cr
     protected Submission submissionID;
 
     @Column(name = "language")
-    protected String language;
+    protected String language = SupportedLanguage.English.getId();
 
     @Column(name = "splitNumber")
     protected Integer splitNumber = 1;

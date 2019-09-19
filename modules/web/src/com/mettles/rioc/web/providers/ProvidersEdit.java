@@ -68,34 +68,47 @@ public class ProvidersEdit extends StandardEditor<Providers> {
             bCurrItemNull = true;
             System.out.println("Exception occured");
         }
+        String Recepient_oid = "2.16.840.1.113883.3.6037.2.47";
+        Recepient intdRecp = null;
+        try {
+             intdRecp = dataManager.loadValue(
+                    "select o from rioc_Recepient o " +
+                            "where o.oid = :recep ", Recepient.class)
+                    .parameter("recep", Recepient_oid)
+                    .one();
+        }catch(Exception e){
+            notifications.create().withCaption("EMDR Registration default RC is not configured").withType(Notifications.NotificationType.HUMANIZED).show();
+            return;
+        }
+        if (intdRecp == null) {
+            //Show error
+            return;
+        }
+        LineofBusiness purpOfSub = null;
+        String contentType = "5";
+        try {
+            purpOfSub = dataManager.loadValue(
+                    "select o from rioc_LineofBusiness o " +
+                            "where o.contentType = :purp ", LineofBusiness.class)
+                    .parameter("purp", contentType)
+                    .one();
+        }catch(Exception e){
+            notifications.create().withCaption("EMDR Registration Content Type is not configured").withType(Notifications.NotificationType.HUMANIZED).show();
+            return;
+        }
+
+        if (purpOfSub == null) {
+            //Show error
+            return;
+        }
+
+        this.commitChanges();
         Submission currObj;
         Providers prov = providersDc.getItem();
         if(bCurrItemNull) {
              currObj = dataManager.create(Submission.class);
             currObj.setAuthorNPI("1234567890");
             currObj.setTitle("Emdr Registration");
-            String Recepient_oid = "2.16.840.1.113883.3.6037.2.47";
-            Recepient intdRecp = dataManager.loadValue(
-                    "select o from rioc_Recepient o " +
-                            "where o.oid = :recep ", Recepient.class)
-                    .parameter("recep", Recepient_oid)
-                    .one();
-            if (intdRecp == null) {
-                //Show error
-                return;
-            }
-            LineofBusiness purpOfSub = null;
-            String contentType = "5";
-            purpOfSub = dataManager.loadValue(
-                    "select o from rioc_LineofBusiness o " +
-                            "where o.contentType = :purp ", LineofBusiness.class)
-                    .parameter("purp", contentType)
-                    .one();
-
-            if (purpOfSub == null) {
-                //Show error
-                return;
-            }
 
             currObj.setIntendedRecepient(intdRecp);
             currObj.setPurposeOfSubmission(purpOfSub);
@@ -109,32 +122,10 @@ public class ProvidersEdit extends StandardEditor<Providers> {
         }else {
             currObj = submissionDc.getItem();
             if(currObj.getIntendedRecepient() == null){
-                String Recepient_oid = "2.16.840.1.113883.3.6037.2.47";
-                Recepient intdRecp = dataManager.loadValue(
-                        "select o from rioc_Recepient o " +
-                                "where o.oid = :recep ", Recepient.class)
-                        .parameter("recep", Recepient_oid)
-                        .one();
-                if (intdRecp == null) {
-                    //Show error
-                    return;
-                }
-                currObj.setIntendedRecepient(intdRecp);
+               currObj.setIntendedRecepient(intdRecp);
             }
             if(currObj.getPurposeOfSubmission() == null){
-                LineofBusiness purpOfSub = null;
-                String contentType = "5";
-                purpOfSub = dataManager.loadValue(
-                        "select o from rioc_LineofBusiness o " +
-                                "where o.contentType = :purp ", LineofBusiness.class)
-                        .parameter("purp", contentType)
-                        .one();
-
-                if (purpOfSub == null) {
-                    //Show error
-                    return;
-                }
-                currObj.setPurposeOfSubmission(purpOfSub);
+               currObj.setPurposeOfSubmission(purpOfSub);
             }
             providersDc.getItem().setSubmissionID(currObj);
             }

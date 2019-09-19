@@ -37,6 +37,8 @@
                 <column id="isEsmdClaimIdMandatory"/>
                 <column id="isEsmdClaimDisplayed"/>
                 <column id="isCaseIdDisplayed"/>
+                <column id="isX12Supported" caption = "X12 Supported"/>
+
             </columns>
             <rowsCount/>
             <buttonsPanel id="buttonsPanel"

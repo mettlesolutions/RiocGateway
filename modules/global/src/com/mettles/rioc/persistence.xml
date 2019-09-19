@@ -12,5 +12,7 @@
         <class>com.mettles.rioc.entity.Document</class>
         <class>com.mettles.rioc.entity.HIHConfiguration</class>
         <class>com.mettles.rioc.entity.Providers</class>
-          </persistence-unit>
+        <class>com.mettles.rioc.entity.State</class>
+        <class>com.mettles.rioc.entity.Address</class>
+    </persistence-unit>
 </persistence>

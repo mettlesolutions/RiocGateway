@@ -1,12 +1,15 @@
 package com.mettles.rioc.web.submission;
 
+import com.haulmont.cuba.gui.components.actions.EditAction;
 import com.mettles.rioc.UiNotificationEvent;
+import com.mettles.rioc.X12275SubmissionStatus;
 import com.mettles.rioc.entity.*;
 import com.mettles.rioc.entity.Error;
 import com.haulmont.cuba.core.global.*;
 import com.haulmont.cuba.gui.Notifications;
 import com.haulmont.cuba.gui.actions.list.RemoveAction;
 import com.haulmont.cuba.gui.components.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.event.EventListener;
 import com.haulmont.cuba.gui.components.data.table.ContainerTableItems;
 import com.haulmont.cuba.gui.model.*;
@@ -45,6 +48,10 @@ public class SubmissionEdit extends StandardEditor<Submission> {
     @Inject
     Table documentSetTable;
 
+
+
+
+
     @Inject
     private LookupPickerField<LineofBusiness> purposeOfSubmissionField;
 
@@ -62,6 +69,9 @@ public class SubmissionEdit extends StandardEditor<Submission> {
 
     @Inject
     private TextField esmdCaseIdField;
+
+    @Inject
+    private CheckBox bSendinX12Field;
 
 
     @Inject
@@ -94,12 +104,148 @@ public class SubmissionEdit extends StandardEditor<Submission> {
     @Inject
     private Metadata metadata;
 
+
+
+    public void sendDocumentinX12(){
+        Submission sub = submissionDc.getItem();
+        if(sub.getAutoSplit()){
+            notifications.create().withCaption("Auto Split Can't be enabled for ").withType(Notifications.NotificationType.HUMANIZED).show();
+            btnsubmit.setVisible(true);
+            btnsubmit.setEnabled(true);
+            return;
+        }
+        if(sub.getIntendedRecepient().getEdiID() == null){
+            notifications.create().withCaption("This RC doesnt have EDI ID configured").withType(Notifications.NotificationType.HUMANIZED).show();
+            btnsubmit.setVisible(true);
+            btnsubmit.setEnabled(true);
+            return;
+        }
+       if(StringUtils.isEmpty(sub.getEsMDClaimID())){
+           notifications.create().withCaption("Claim id cannot be empty for PWK").withType(Notifications.NotificationType.HUMANIZED).show();
+           btnsubmit.setVisible(true);
+           btnsubmit.setEnabled(true);
+           return;
+       }
+        if(sub.getDocument() == null){
+            System.out.println("get document null");
+            btnsubmit.setVisible(true);
+            btnsubmit.setEnabled(true);
+            return;
+        }else{
+            System.out.println("get document size is"+sub.getDocument().size());
+            boolean bError = false;
+            String attachmentControlNum= null;
+            int splitNum = 0;
+
+            long size = 0;
+
+            if(sub.getDocument().size() > 0){
+                Iterator<Document> documentIterator = sub.getDocument().iterator();
+                while(documentIterator.hasNext()){
+                    Document dtTemp = documentIterator.next();
+                    if(dtTemp.getFileDescriptor() == null){
+                        notifications.create().withCaption("Auto Split Can't be enabled for X12 Submissions ").withType(Notifications.NotificationType.HUMANIZED).show();
+                        btnsubmit.setVisible(true);
+                        btnsubmit.setEnabled(true);
+                        return;
+                    }else{
+                        size = size + dtTemp.getFileDescriptor().getSize();
+                    }
+                    if(splitNum == 0){
+                        splitNum = dtTemp.getSplitNumber();
+                    }else if(dtTemp.getSplitNumber() != splitNum){
+                        notifications.create().withCaption("Splits are not supported for X12 PWK ").withType(Notifications.NotificationType.HUMANIZED).show();
+                        btnsubmit.setVisible(true);
+                        btnsubmit.setEnabled(true);
+                        return;
+                    }
+                    if(dtTemp.getAttachmentControlNumber()  ==  null || dtTemp.getAttachmentControlNumber().equals("")){
+                        notifications.create().withCaption("Attachment Control Number cannot be null ").withType(Notifications.NotificationType.HUMANIZED).show();
+                        btnsubmit.setVisible(true);
+                        btnsubmit.setEnabled(true);
+                        return;
+                    }else{
+                        if(attachmentControlNum  == null){
+                            attachmentControlNum = dtTemp.getAttachmentControlNumber();
+                        }else{
+                            if(!attachmentControlNum.equals(dtTemp.getAttachmentControlNumber())){
+                                notifications.create().withCaption("Attachment Control Number for all the documents needs to be same ").withType(Notifications.NotificationType.HUMANIZED).show();
+                                btnsubmit.setVisible(true);
+                                btnsubmit.setEnabled(true);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            System.out.println("Total size is "+size);
+            if(size > 150000000){
+                notifications.create().withCaption("Total file size cannot be greater than 150MB ").withType(Notifications.NotificationType.HUMANIZED).show();
+                btnsubmit.setVisible(true);
+                btnsubmit.setEnabled(true);
+                return;
+            }else{
+                submitX12275Document(sub);
+            }
+        }
+
+    }
+
+    public void submitX12275Document(Submission sub){
+
+        X12275SubmissionStatus status = AppBeans.get(SubmissionService.class).SubmitX12275Submission(sub);
+        CommitContext commitContext = new CommitContext();
+
+        if(status.getErrorCode().equals("Success")){
+            submissionDc.getItem().setStatus("Success");
+            submissionDc.getItem().setStage("Submitted");
+            submissionDc.getItem().setUniqueIdList(status.getUniqueID());
+            notifications.create().withCaption("Submission Completed check the status table for Update").withType(Notifications.NotificationType.HUMANIZED).show();
+        }else{
+            submissionDc.getItem().setStatus(status.getErrorCode());
+            submissionDc.getItem().setStage(status.getErrorMessage());
+            submissionDc.getItem().setUniqueIdList(status.getUniqueID());
+            notifications.create().withCaption("Submission Failed").withType(Notifications.NotificationType.HUMANIZED).show();
+        }
+        {
+            System.out.println("Entered into get status change");
+            Iterator<Document> documentIterator = documentDc.getItems().iterator();
+            while(documentIterator.hasNext()){
+                Document dtTemptoRem = documentIterator.next();
+
+                    dataManager.remove(dtTemptoRem.getFileDescriptor());
+                    try {
+                        // dtTemptoRem.getFileDescriptor().
+                        // fileLoader.
+                        fileLoader.removeFile(dtTemptoRem.getFileDescriptor());
+                    }catch(Exception e){
+                        System.out.println("Exception Occured while removing the file");
+                    }
+
+                    dtTemptoRem.setFileDescriptor(null);
+                    documentDc.replaceItem(dtTemptoRem);
+                    // commitContext.addInstanceToCommit(dtTemptoRem);
+
+            }
+        }
+        commitContext.addInstanceToCommit(submissionDc.getItem());
+        dataManager.commit(commitContext);
+    }
+
+
     public void onBtnsubmitClick() {
         String txt = "Submitted";
+
+         this.commitChanges();
 
         Document dcTemp = null;
         //submissionDc.getItem().setDocument(documentDc.getItems());
         Submission sub = submissionDc.getItem();
+
+        if(sub.getBSendinX12() || bSendinX12Field.isChecked()){
+            sendDocumentinX12();
+            return;
+        }
 
         ArrayList<Document> docArryListSubmit = null;
         if(sub.getDocument() == null){
@@ -109,6 +255,13 @@ public class SubmissionEdit extends StandardEditor<Submission> {
             return;
         }else{
             System.out.println("get document size is"+sub.getDocument().size());
+            if(sub.getDocument().size() == 0) {
+                notifications.create().withCaption("Please upload document").withType(Notifications.NotificationType.HUMANIZED).show();
+                btnsubmit.setVisible(true);
+                btnsubmit.setEnabled(true);
+                return;
+            }
+
         }
         if(sub.getAutoSplit()){
             if(sub.getDocument().size() > 1){
@@ -391,16 +544,24 @@ public class SubmissionEdit extends StandardEditor<Submission> {
   @Subscribe("purposeOfSubmissionField")
   protected void onpurposeOfSubmissionFieldValueChange(HasValue.ValueChangeEvent<LineofBusiness> event) {
     LineofBusiness selval = event.getValue();
-    if(selval.getIsCaseIdDisplayed()){
-        esmdCaseIdField.setVisible(true);
-    }else{
-        esmdCaseIdField.setVisible(false);
+    if(selval != null ) {
+        if (selval.getIsCaseIdDisplayed()) {
+            esmdCaseIdField.setVisible(true);
+        } else {
+            esmdCaseIdField.setVisible(false);
+        }
+        if (selval.getIsEsmdClaimDisplayed()) {
+            esMDClaimIDField.setVisible(true);
+        } else {
+            esMDClaimIDField.setVisible(false);
+        }
+
+        if (selval.getIsX12Supported()) {
+            bSendinX12Field.setVisible(true);
+        } else {
+            bSendinX12Field.setVisible(false);
+        }
     }
-      if(selval.getIsEsmdClaimDisplayed()){
-          esMDClaimIDField.setVisible(true);
-      }else{
-          esMDClaimIDField.setVisible(false);
-      }
   }
 
 
@@ -469,6 +630,8 @@ public class SubmissionEdit extends StandardEditor<Submission> {
         }
 
     }
+
+
 
    /* @Subscribe(id = "submissionDc", target = Target.DATA_CONTAINER)
     private void onsubmissionDcItemPropertyChange(

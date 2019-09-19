@@ -17,6 +17,19 @@ public class Recepient extends StandardEntity {
     @Column(name = "oid", length = 512)
     protected String oid;
 
+
+    public String getEdiID() {
+        return ediID;
+    }
+
+    public void setEdiID(String ediID) {
+        this.ediID = ediID;
+    }
+
+    @Column(name = "ediID", length = 512)
+    protected String ediID;
+
+
     public String getOid() {
         return oid;
     }

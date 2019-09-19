@@ -1,5 +1,6 @@
 package com.mettles.rioc.portal.customcontrollers;
 
+import com.mettles.rioc.X12275SubmissionStatus;
 import com.mettles.rioc.entity.*;
 import com.mettles.rioc.entity.Error;
 import com.mettles.rioc.portal.jsonobjects.*;
@@ -7,6 +8,7 @@ import com.mettles.rioc.portal.jsonobjects.*;
 import com.haulmont.cuba.core.entity.FileDescriptor;
 import com.haulmont.cuba.core.global.*;
 import com.haulmont.cuba.portal.App;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import com.mettles.rioc.service.SubmissionService;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,8 +34,7 @@ public class RiocCustomController {
     @Inject
     private SubmissionService someService;
     @Inject
-
-  private DataManager datamanager;
+    private DataManager datamanager;
 
     @Inject
     private FileLoader fileLoader;
@@ -94,7 +95,15 @@ public class RiocCustomController {
     public @ResponseBody
     ProviderResponseModel PostProviderReg(@PathVariable Long id,@RequestBody PostProviderRequestModel tempReqObj){
         ProviderResponseModel retval = new ProviderResponseModel();
-        Providers prov = datamanager.load(Providers.class).id(id).view("provider-view").one();
+        Providers prov = null;
+        try {
+             prov = datamanager.load(Providers.class).id(id).view("provider-view").one();
+          }catch(Exception e)
+          {
+              retval.setCall_error_code("2");
+              retval.setCall_error_description("No records found for the Provider ID ");
+              return retval;
+           }
         if(prov == null){
             retval.setCall_error_code("2");
             retval.setCall_error_description("No records found for the Provider ID ");
@@ -303,7 +312,14 @@ public class RiocCustomController {
     ProviderRegStatusResponseModel GetProviderRegStatus(@PathVariable Long id){
         ProviderRegStatusResponseModel retVal = new ProviderRegStatusResponseModel();
         retVal.setProvider_id(id.toString());
-        Providers prov = datamanager.load(Providers.class).id(id).view("provider-view").one();
+        Providers prov = null;
+        try {
+             prov = datamanager.load(Providers.class).id(id).view("provider-view").one();
+        }catch(Exception e){
+            retVal.setCall_error_code("2");
+            retVal.setCall_error_description("No records found for the Provider Id provided");
+            return retVal;
+        }
         if(prov == null){
             retVal.setCall_error_code("2");
             retVal.setCall_error_description("No records found for the Provider Id provided");
@@ -330,6 +346,7 @@ public class RiocCustomController {
         retVal.setStage(prov.getSubmissionID().getStage());
         retVal.setStatus(prov.getSubmissionID().getStatus());
         retVal.setTransaction_id_list(prov.getSubmissionID().getTransactionIdList());
+        retVal.setReg_status(prov.getLast_submitted_transaction().getId());
         Iterator<Error> errorIterator ;
         if(prov.getSubmissionID().getError() != null) {
             errorIterator = prov.getSubmissionID().getError().iterator();
@@ -366,6 +383,71 @@ public class RiocCustomController {
             retVal.setStatus_changes(statusChangesJsonObjectArrayList);
         }
         return retVal;
+    }
+
+    SubmissionResponseModel validateX12SubInputs( SubmissionRequestModel lb,SubmissionResponseModel ret,LineofBusiness purpOfSub,Recepient intdRecp){
+
+        if(!purpOfSub.getIsX12Supported()){
+            ret.setCall_error_code("5");
+            ret.setCall_error_description("Purpose of Submission doesnt support X12");
+            return ret;
+        }
+
+        if(lb.isAuto_split()){
+
+            ret.setCall_error_code("7");
+            ret.setCall_error_description("Split is not supported for X12 ");
+            return ret;
+
+        }
+
+        if(intdRecp.getEdiID() == null){
+
+            ret.setCall_error_code("9");
+            ret.setCall_error_description("No EDI Configured for this RC cannot send X12 ");
+            return ret;
+        }
+
+        if(StringUtils.isEmpty(lb.getEsMD_claim_id())){
+            ret.setCall_error_code("10");
+            ret.setCall_error_description("Claimid cannot be empty for PWK X12 submission");
+            return ret;
+        }
+
+        {
+            String attachmentControlNum = null;
+            int splitNum = 0;
+            Iterator<DocumentSetJsonObject> dociterator = lb.getDocument_set().iterator();
+            while(dociterator.hasNext()){
+                DocumentSetJsonObject dtTemp = dociterator.next();
+                 if(dtTemp.getSplit_no() != null){
+                     if(splitNum == 0){
+                         splitNum = dtTemp.getSplit_no();
+                     }else if(dtTemp.getSplit_no() != splitNum){
+                         ret.setCall_error_code("12");
+                         ret.setCall_error_description("Splits are not supported for PWK");
+                         return ret;
+                     }
+                 }
+
+                if(dtTemp.getAttachmentControlNum()  ==  null || dtTemp.getAttachmentControlNum().equals("")){
+                    ret.setCall_error_code("11");
+                    ret.setCall_error_description("Attachment Control Number connot be null for PWK");
+                    return ret;
+                }else{
+                    if(attachmentControlNum  == null){
+                        attachmentControlNum = dtTemp.getAttachmentControlNum();
+                    }else{
+                        if(!attachmentControlNum.equals(dtTemp.getAttachmentControlNum())){
+                            ret.setCall_error_code("11");
+                            ret.setCall_error_description("Attachment Control Number for all the documents needs to be same");
+                            return ret;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     @PostMapping("/submission")
@@ -420,6 +502,12 @@ public class RiocCustomController {
             temp.setCall_error_description("Purpose of submission not found");
             return temp;
         }
+
+        if(lb.isbSendinX12()){
+            SubmissionResponseModel retval =  validateX12SubInputs(lb,temp,purpOfSub,intdRecp);
+            if(retval != null)
+                return retval;
+        }
        // boolean esmdClai
         if((purpOfSub.getIsEsmdClaimIdMandatory() != null)){
             if(purpOfSub.getIsEsmdClaimIdMandatory() ) {
@@ -463,6 +551,9 @@ public class RiocCustomController {
 
         //int retVal = AppBeans.get(SubmissionService.class).CallConnectApi(subTemp,subTemp.getDocument().iterator().next());
         subTemp.setAutoSplit(lb.isAuto_split());
+        if(lb.isbSendinX12())
+        subTemp.setBSendinX12(lb.isbSendinX12());
+
         datamanager.commit(subTemp);
         List<Document> docSubSet = new ArrayList<>();
         Iterator<DocumentSetJsonObject> dociterator = lb.getDocument_set().iterator();
@@ -473,6 +564,12 @@ public class RiocCustomController {
             docTemp.setTitle(dtJsonTemp.getName());
             docTemp.setSubmissionID(subTemp);
             docTemp.setSplitNumber(dtJsonTemp.getSplit_no());
+            if(dtJsonTemp.getAttachmentControlNum() != null)
+                docTemp.setAttachmentControlNumber(dtJsonTemp.getAttachmentControlNum());
+
+
+
+
             datamanager.commit(docTemp);
             docSubSet.add(docTemp);
         }
@@ -483,21 +580,65 @@ public class RiocCustomController {
 
     }
 
+    public void submitX12275Document(Submission sub){
+
+        X12275SubmissionStatus status = AppBeans.get(SubmissionService.class).SubmitX12275Submission(sub);
+        CommitContext commitContext = new CommitContext();
+
+        if(status.getErrorCode().equals("Success")){
+            sub.setStatus("Success");
+            sub.setStage("Submitted");
+            sub.setUniqueIdList(status.getUniqueID());
+        }else{
+            sub.setStatus(status.getErrorCode());
+            sub.setStage(status.getErrorMessage());
+            sub.setUniqueIdList(status.getUniqueID());
+        }
+        {
+            System.out.println("Entered into get status change");
+            Iterator<Document> documentIterator = sub.getDocument().iterator();
+            while(documentIterator.hasNext()){
+                Document dtTemptoRem = documentIterator.next();
+
+                datamanager.remove(dtTemptoRem.getFileDescriptor());
+                try {
+                    // dtTemptoRem.getFileDescriptor().
+                    // fileLoader.
+                    fileLoader.removeFile(dtTemptoRem.getFileDescriptor());
+                }catch(Exception e){
+                    System.out.println("Exception Occured while removing the file");
+                }
+
+                dtTemptoRem.setFileDescriptor(null);
+                // commitContext.addInstanceToCommit(dtTemptoRem);
+
+            }
+        }
+        commitContext.addInstanceToCommit(sub);
+        datamanager.commit(commitContext);
+    }
+
     @RequestMapping(value="/submission/{id}", method= POST)
     public @ResponseBody
     SubmissionResponseModel PostSubmission(@PathVariable Long id,@ModelAttribute PostSubmissionRequest tempReqObj){
         SubmissionResponseModel retVal = new SubmissionResponseModel();
         List<MultipartFile> localFiles = tempReqObj.getUploadFiles();
+        Submission sub = null;
+        try {
+             sub = datamanager.load(Submission.class).id(id).view("submission-view").one();
 
-
-        Submission sub = datamanager.load(Submission.class).id(id).view("submission-view").one();
+        }catch(Exception e){
+            retVal.setCall_error_code("2");
+            retVal.setCall_error_description("No records found for the submission Id provided");
+            return retVal;
+        }
         if(sub == null){
             retVal.setCall_error_code("2");
             retVal.setCall_error_description("No records found for the submission Id provided");
             return retVal;
         }
         List<Document> docObj = sub.getDocument();
-        if(sub.getStage().equals("Submitted")){
+        if(!sub.getStage().equals("Draft")){
             retVal.setCall_error_code("3");
             retVal.setCall_error_description("Post call can be used only during draft stage");
             return retVal;
@@ -611,6 +752,14 @@ public class RiocCustomController {
                 locDt.setFileDescriptor(fileDescriptor);
                 datamanager.commit(locDt);
             }
+        }
+        if(sub.getBSendinX12()){
+            submitX12275Document(sub);
+            retVal.setSubmission_status(sub.getStage());
+            retVal.setCall_error_code(sub.getStatus());
+            retVal.setSubmission_id(id.toString());
+            return retVal;
+
         }
 
         List<StatusChange> statchngList = new ArrayList<>();
@@ -759,8 +908,16 @@ public class RiocCustomController {
     public @ResponseBody
     SubmissionGetStatusResponseModel PostSubmission(@PathVariable Long id){
         SubmissionGetStatusResponseModel retVal = new SubmissionGetStatusResponseModel();
+
         retVal.setSubmission_id(id.toString());
-        Submission sub = datamanager.load(Submission.class).id(id).view("submission-view").one();
+        Submission sub = null;
+        try {
+             sub = datamanager.load(Submission.class).id(id).view("submission-view").one();
+        }catch(Exception e){
+            retVal.setCall_error_code("2");
+            retVal.setCall_error_description("No records found for the submission Id provided");
+            return retVal;
+        }
         if(sub == null){
             retVal.setCall_error_code("2");
             retVal.setCall_error_description("No records found for the submission Id provided");

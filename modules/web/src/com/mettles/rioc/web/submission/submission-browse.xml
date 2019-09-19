@@ -37,10 +37,10 @@
             <columns>
                 <column id="title"/>
                 <column id="purposeOfSubmission"/>
-                <column id="esMDClaimID"/>
+                <column id="esMDClaimID" caption = "Claim ID"/>
                 <column id="intendedRecepient" />
-                <column id="esmdCaseId"/>
-                <column id="esmdTransactionId"/>
+                <column id="esmdCaseId" caption = "Case ID"/>
+                <column id="esmdTransactionId" caption = "Transaction ID"/>
                 <column id="uniqueIdList" visible="false"/>
                 <column id="transactionIdList" />
                  <column id="stage" visible="false"/>

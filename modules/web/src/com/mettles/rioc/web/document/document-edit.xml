@@ -26,6 +26,8 @@
                     <lookupField id="languageField" property="language"/>
                     <lookupField id="documenttypeField" property="document_type"/>
                     <textField id="splitNumberField" property="splitNumber"/>
+                    <textField id="attachmentControlNumberField" property="attachmentControlNumber"/>
+
                 </column>
             </form>
         </scrollBox>

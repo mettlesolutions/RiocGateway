@@ -95,8 +95,14 @@ configure(coreModule) {
         compile('com.mettles.thirdparty:CONNECTCoreLib-5.1.2')
         compile('com.mettles.thirdparty:DocumentSubmissionCore-5.1.2')
         compile('com.mettles.thirdparty:DocumentSubmissionWebervices-5.1.0')
+        compile('com.mettles.thirdparty:CORE_X12DocumentSubmissionCore-5.1.2')
+        compile('com.mettles.thirdparty:CORERule2_2_0Webservices-5.1.0')
         compile('com.mettles.thirdparty:emdr')
         compile('com.mettles.thirdparty:x12278')
+        compile('com.mettles.thirdparty:x12275')
+        compile('com.mettles.thirdparty:x12275314')
+        compile('com.mettles.thirdparty:x12999')
+        compile('com.mettles.thirdparty:X12EDIReadWriter')
         compile group: 'commons-configuration', name: 'commons-configuration', version: '1.9'
         compile group: 'org.apache.cxf', name: 'cxf-rt-frontend-jaxws', version: '3.0.1'
         compile group: 'org.apache.cxf', name: 'cxf-rt-transports-http', version: '3.0.3'
@@ -286,7 +292,7 @@ task restart(dependsOn: ['stop', ":${modulePrefix}-core:deploy", ":${modulePrefi
 task buildWar(type: CubaWarBuilding) {
     singleWar = false
     appProperties = ['cuba.automaticDatabaseUpdate': true]
-    appHome = 'C:/Users/paddu/app_home'
+    appHome = 'C:/Users/rioc/app_home'
     doLast {
         copy {
             from 'jboss-deployment-structure.xml'

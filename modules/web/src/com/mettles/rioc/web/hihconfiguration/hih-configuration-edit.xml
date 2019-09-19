@@ -24,6 +24,9 @@
                 <textField id="payloadThresholdField" property="payloadThreshold"/>
                 <textField id="hIHDescriptionField" property="hIHDescription"/>
                 <textField id="esMDUrlField" property="esMDUrl"/>
+
+                <textField id="ediIDField" property="ediID"/>
+
             </column>
         </form>
         <hbox id="editActions" spacing="true">

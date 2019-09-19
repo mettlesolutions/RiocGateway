@@ -18,13 +18,11 @@ create table RIOC_SPLIT_MAPS (
 -- begin RIOC_ERROR
 create table RIOC_ERROR (
     ID varchar(32),
-    VERSION integer not null,
-    CREATE_TS datetime(3),
-    CREATED_BY varchar(50),
     UPDATE_TS datetime(3),
     UPDATED_BY varchar(50),
-    DELETE_TS datetime(3),
-    DELETED_BY varchar(50),
+    CREATE_TS datetime(3),
+    CREATED_BY varchar(50),
+    VERSION integer not null,
     --
     submission_id bigint,
     name varchar(255),
@@ -42,13 +40,11 @@ create table RIOC_ERROR (
 -- begin RIOC_STATUS_CHANGE
 create table RIOC_STATUS_CHANGE (
     ID varchar(32),
-    VERSION integer not null,
-    CREATE_TS datetime(3),
-    CREATED_BY varchar(50),
     UPDATE_TS datetime(3),
     UPDATED_BY varchar(50),
-    DELETE_TS datetime(3),
-    DELETED_BY varchar(50),
+    CREATE_TS datetime(3),
+    CREATED_BY varchar(50),
+    VERSION integer not null,
     --
     submission_id bigint,
     name varchar(512),
@@ -80,6 +76,7 @@ create table RIOC_HIH_CONFIGURATION (
     payloadThreshold integer not null,
     hIHDescription varchar(512) not null,
     esMDUrl varchar(512) not null,
+    ediID varchar(512) not null,
     --
     primary key (ID)
 )^
@@ -101,6 +98,7 @@ create table RIOC_LINEOF_BUSINESS (
     is_esmd_claim_mandatory boolean,
     is_esmd_claim_displayed boolean,
     is_esmd_caseid_displayed boolean,
+    is_x12_supported boolean,
     --
     primary key (ID)
 )^
@@ -108,13 +106,11 @@ create table RIOC_LINEOF_BUSINESS (
 -- begin RIOC_NOTIFICATION_SLOT
 create table RIOC_NOTIFICATION_SLOT (
     ID varchar(32),
-    VERSION integer not null,
-    CREATE_TS datetime(3),
-    CREATED_BY varchar(50),
     UPDATE_TS datetime(3),
     UPDATED_BY varchar(50),
-    DELETE_TS datetime(3),
-    DELETED_BY varchar(50),
+    CREATE_TS datetime(3),
+    CREATED_BY varchar(50),
+    VERSION integer not null,
     --
     submission_id bigint,
     name varchar(255),
@@ -159,6 +155,7 @@ create table RIOC_SUBMISSION (
     esmd_transaction_id varchar(255),
     highest_split_no integer,
     last_submitted_split integer,
+    bsendinx12 boolean,
     unique_id_list longtext,
     transaction_id_list varchar(255),
     threshold integer,
@@ -203,6 +200,7 @@ create table RIOC_RECEPIENT (
     --
     name varchar(512),
     oid varchar(512),
+    ediID varchar(512),
     --
     primary key (ID)
 )^
@@ -225,3 +223,40 @@ create table RIOC_PROVIDERS (
     primary key (ID)
 )^
 -- end RIOC_PROVIDERS
+-- begin RIOC_ADDRESS
+create table RIOC_ADDRESS (
+    ID varchar(32),
+    VERSION integer not null,
+    CREATE_TS datetime(3),
+    CREATED_BY varchar(50),
+    UPDATE_TS datetime(3),
+    UPDATED_BY varchar(50),
+    DELETE_TS datetime(3),
+    DELETED_BY varchar(50),
+    --
+    addrLine1 varchar(512),
+    addrLine2 varchar(512),
+    city varchar(512),
+    zipcode varchar(512),
+    code varchar(32),
+    --
+    primary key (ID)
+)^
+-- end RIOC_ADDRESS
+-- begin RIOC_STATE
+create table RIOC_STATE (
+    ID varchar(32),
+    VERSION integer not null,
+    CREATE_TS datetime(3),
+    CREATED_BY varchar(50),
+    UPDATE_TS datetime(3),
+    UPDATED_BY varchar(50),
+    DELETE_TS datetime(3),
+    DELETED_BY varchar(50),
+    --
+    name varchar(512),
+    code varchar(512),
+    --
+    primary key (ID)
+)^
+-- end RIOC_STATE

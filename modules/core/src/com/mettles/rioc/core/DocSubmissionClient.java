@@ -177,6 +177,8 @@ public class DocSubmissionClient {
         String HIH_Oid="2.16.840.1.113883.3.6037.2";
         String HIH_Description = "Test Hih Oid to create the data";
         String HIH_Esmd_Url = "https://207.37.82.83:443/Gateway/DocumentSubmission/1_1/DocumentRepositoryXDR_Service";
+        String Issuer = "cn=valtest.mettles.com, o=\"Mettle Solutions, LLC.\", l=Columbia, st=Maryland, c=US";
+
         if(hihConfigList == null){
             System.out.println("HIHConfiguration parameters are not set");
 
@@ -188,6 +190,7 @@ public class DocSubmissionClient {
                 HIH_Oid = hihConfigParam.getHIIHOid();
                 HIH_Description = hihConfigParam.getHIHDescription();
                 HIH_Esmd_Url = hihConfigParam.getEsMDUrl();
+                Issuer = hihConfigParam.getIssuer();
             }
 
         }
@@ -196,6 +199,7 @@ public class DocSubmissionClient {
         hihval.setHIH_Esmd_Url(HIH_Esmd_Url);
         hihval.setHIH_Name(HIH_Name);
         hihval.setHIH_Oid(HIH_Oid);
+        hihval.setIssuer(Issuer);
 
         ReceipientInfo rcinfo = new ReceipientInfo();
         rcinfo.setOid(sub.getIntendedRecepient().getOid());
@@ -324,7 +328,7 @@ public class DocSubmissionClient {
         //client.enableMtom();
         try {
             ConnectSoapClient soapClient = new ConnectSoapClient();
-            SubmissionStatus substatus = soapClient.SoapClientCall(subdata,uniqueid,parentId,"http://val.mettles.com:8080");
+            SubmissionStatus substatus = soapClient.SoapClientCall(subdata,uniqueid,parentId,"http://localhost:8080");
             List<StatusChange> tempstchngList = sub.getStatusChange();
             if(tempstchngList == null){
                 tempstchngList = new ArrayList<>();

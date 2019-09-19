@@ -26,6 +26,17 @@ public class LineofBusiness extends StandardEntity {
     @Column(name = "is_esmd_caseid_displayed")
     protected Boolean isCaseIdDisplayed = false;
 
+    public Boolean getIsX12Supported() {
+        return isX12Supported;
+    }
+
+    public void setIsX12Supported(Boolean x12Supported) {
+        isX12Supported = x12Supported;
+    }
+
+    @Column(name = "is_x12_supported")
+    protected Boolean isX12Supported = false;
+
     public Boolean getIsCaseIdDisplayed() {
         return isCaseIdDisplayed;
     }

@@ -20,6 +20,8 @@
                 <checkBox id="isEsmdClaimIdMandatoryField" property="isEsmdClaimIdMandatory"/>
                 <checkBox id="isEsmdClaimDisplayedField" property="isEsmdClaimDisplayed"/>
                 <checkBox id="isCaseIdDisplayedField" property="isCaseIdDisplayed"/>
+                <checkBox id="isX12SupportedField" property="isX12Supported" caption = "X12 Supported"/>
+
             </column>
         </form>
         <hbox id="editActions" spacing="true">

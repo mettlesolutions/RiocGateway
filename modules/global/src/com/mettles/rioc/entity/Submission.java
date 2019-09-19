@@ -60,7 +60,7 @@ public class Submission extends BaseLongIdEntity {
     protected String patientAddressCity;
 
     @Column(name = "author_type")
-    protected String authorType;
+    protected String authorType =  AuthorType.institution.getId();
 
     @Column(name = "phonenumber")
     protected String phonenumber;
@@ -121,6 +121,17 @@ public class Submission extends BaseLongIdEntity {
     @Column(name = "last_submitted_split")
     protected Integer lastSubmittedSplit;
 
+    public Boolean getBSendinX12() {
+        return bSendinX12;
+    }
+
+    public void setBSendinX12(Boolean bSendinX12) {
+        this.bSendinX12 = bSendinX12;
+    }
+
+    @Column(name = "bsendinx12")
+    protected Boolean bSendinX12 = false;
+
     @Lob
     @Column(name = "unique_id_list")
     protected String uniqueIdList;
@@ -134,17 +145,17 @@ public class Submission extends BaseLongIdEntity {
     @Column(name = "auto_split")
     protected Boolean autoSplit = false;
 
-    @OnDeleteInverse(DeletePolicy.CASCADE)
     @Composition
     @OneToMany(mappedBy = "submissionId")
     protected List<Error> error;
 
-    @OnDeleteInverse(DeletePolicy.CASCADE)
+
     @Composition
     @OneToMany(mappedBy = "submissionId")
     protected List<NotificationSlot> notificationSlot;
 
-    @OnDeleteInverse(DeletePolicy.CASCADE)
+
+
     @Composition
     @OneToMany(mappedBy = "submissionId")
     protected List<StatusChange> statusChange;

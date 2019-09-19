@@ -7,6 +7,16 @@ public class DocumentSetJsonObject {
     private String filename;
     private String document_type;
 
+    public String getAttachmentControlNum() {
+        return attachmentControlNum;
+    }
+
+    public void setAttachmentControlNum(String attachmentControlNum) {
+        this.attachmentControlNum = attachmentControlNum;
+    }
+
+    private String attachmentControlNum;
+
     public String getName() {
         return name;
     }

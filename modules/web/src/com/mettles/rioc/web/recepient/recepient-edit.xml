@@ -17,6 +17,8 @@
             <column width="250px">
                 <textField id="intendedRecepientField" property="intendedRecepient"/>
                 <textField id="oidField" property="oid"/>
+                <textField id="ediIDField" property="ediID" caption = "EDI ID"/>
+
             </column>
         </form>
         <hbox id="editActions" spacing="true">

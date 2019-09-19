@@ -32,7 +32,7 @@
                 <action id="remove" type="remove"/>
             </actions>
             <columns>
-                <column id="submissionID"/>
+                <column id="submissionID"  visible="false"/>
                 <column id="name"/>
                 <column id="provider_npi"/>
             </columns>

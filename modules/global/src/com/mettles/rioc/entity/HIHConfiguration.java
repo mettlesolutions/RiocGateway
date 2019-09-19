@@ -47,6 +47,18 @@ public class HIHConfiguration extends StandardEntity {
     @Column(name = "esMDUrl", nullable = false, length = 512)
     protected String esMDUrl;
 
+    public String getEdiID() {
+        return ediID;
+    }
+
+    public void setEdiID(String ediID) {
+        this.ediID = ediID;
+    }
+
+    @NotNull
+    @Column(name = "ediID", nullable = false, length = 512)
+    protected String ediID;
+
     public String getEsMDUrl() {
         return esMDUrl;
     }
