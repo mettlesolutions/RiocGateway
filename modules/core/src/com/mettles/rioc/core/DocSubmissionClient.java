@@ -297,6 +297,7 @@ public class DocSubmissionClient {
                 System.out.println("Base64 encoded string len"+fileStr.length());
                 dtlib.setBase64Payload(fileStr);
                 dtlib.setFilesize(String.valueOf(tempdt.getFileDescriptor().getSize()));
+                inputStream.close();
                 tx.close();
                 tx.end();
 

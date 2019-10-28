@@ -167,6 +167,7 @@ public class X12275ConnectSoapClient {
                 InputStream inputStream = fileLoader.openStream(dtTemp.getFileDescriptor());
                 fileStr =   Base64.encodeBase64String(IOUtils.toByteArray(inputStream));
                 temp.getB64PayloadList().add(Base64.encodeBase64String(DocumentPrepare.getContent(fileStr,filetype).getBytes()));
+                inputStream.close();
             }catch(Exception e){
                 System.out.println("Exception occured while reading the file");
             }
