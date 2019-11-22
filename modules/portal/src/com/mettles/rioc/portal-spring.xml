@@ -27,6 +27,7 @@
         <property name="remoteServices">
             <map>
                 <entry key="rioc_SubmissionService" value="com.mettles.rioc.service.SubmissionService"/>
+                <entry key="rioc_X12278SubmissionService" value="com.mettles.rioc.service.X12278SubmissionService"/>
             </map>
         </property>
     </bean>

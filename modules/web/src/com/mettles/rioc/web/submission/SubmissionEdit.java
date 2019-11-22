@@ -95,7 +95,7 @@ public class SubmissionEdit extends StandardEditor<Submission> {
     @Inject
     CollectionPropertyContainer<Error> errorDc;
     @Inject
-    CollectionPropertyContainer<Error> notificationSlotDc;
+    CollectionPropertyContainer<NotificationSlot> notificationSlotDc;
     @Inject
     FileLoader fileLoader;
 
@@ -592,7 +592,7 @@ public class SubmissionEdit extends StandardEditor<Submission> {
 
             if(currItem.getDocument().size() < sub.getDocument().size()){
                 System.out.println("Setting Items");
-                statusChangesTable.setItems(new ContainerTableItems<>(documentDc) );
+                documentSetTable.setItems(new ContainerTableItems<>(documentDc) );
                 //statusChangesTable.setSelected(sub.getStatusChange());
             }
            if(currItem.getStatusChange().size() < sub.getStatusChange().size()){

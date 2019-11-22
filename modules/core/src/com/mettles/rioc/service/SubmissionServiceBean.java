@@ -1,27 +1,26 @@
 package com.mettles.rioc.service;
 
 import com.mettles.rioc.X12275SubmissionStatus;
+import com.mettles.rioc.X12278SubmissionStatus;
+import com.mettles.rioc.X12278ValidationStatus;
 import com.mettles.rioc.core.PDFReadWriter;
 import com.mettles.rioc.core.X12275ConnectSoapClient;
-import com.mettles.rioc.entity.Document;
-import com.mettles.rioc.entity.Providers;
-import com.mettles.rioc.entity.Recepient;
-import com.mettles.rioc.entity.Submission;
+import com.mettles.rioc.core.X12278ConnectSoapClient;
+import com.mettles.rioc.entity.*;
 import com.haulmont.cuba.core.*;
 import com.haulmont.cuba.core.entity.FileDescriptor;
 import com.haulmont.cuba.core.global.*;
+import com.mettles.rioc.x12.EDIWriteStatus;
+import com.mettles.rioc.x12.X12278EDIReadWriter;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Service;
 import com.mettles.rioc.core.DocSubmissionClient;
 
+
 import javax.inject.Inject;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import java.util.UUID;
+import java.util.*;
 
 import org.sejda.core.notification.context.GlobalNotificationContext;
 import org.sejda.core.service.DefaultTaskExecutionService;
@@ -54,6 +53,13 @@ public class SubmissionServiceBean implements SubmissionService {
     @Inject
     private PDFReadWriter pdfreadwriter;
 
+    @Inject
+    private DataManager dataManager;
+
+    String RequesterRequesterNPI ="";
+
+    //EDIWriteStatus retVal = new EDIWriteStatus();
+
 
     @Override
     public List<Document> SplitDocuments(Document largeDoc){
@@ -79,6 +85,91 @@ public class SubmissionServiceBean implements SubmissionService {
         return AppBeans.get(X12275ConnectSoapClient.class).SubmitCAQHBatchSubmission(sub);
 
     }
+
+
+
+    @Override
+    public X12278SubmissionStatus SubmitX12278Submission(X12278Submission x12sub, String EDI, Hashtable <String, String> err999Key)
+    {
+        //String edi = X12278Status.getEDI();
+        System.out.println("Reached SubmitX12278Submission Service");
+        System.out.println("Requested Requester NPI: "+RequesterRequesterNPI);
+        System.out.println(" x12278Submission unqiue ID: "+x12sub.getX12UnqID());
+        //System.out.println("EDIWrite Status Output for validation 999: Get Status:- "+retVal.getStatus());
+        return AppBeans.get(X12278ConnectSoapClient.class).SubmitCAQHRealTimeSubmission(x12sub, RequesterRequesterNPI, EDI, err999Key);
+    }
+
+
+    @Override
+    public X12278ValidationStatus ParseHashtable(Hashtable<String, String> input, String rcvrEDI, String requesterNPI) {
+        System.out.println("Inside Service Bean Parse HashTable Method");
+        System.out.println("---------------------------------------------");
+        X12278ValidationStatus x12278ValidStatus = new X12278ValidationStatus();
+        X12278EDIReadWriter x12278 = new X12278EDIReadWriter();
+        //System.out.println(" x12278Submission unqiue ID: "+x12sub.getX12UnqID());
+        EDIWriteStatus ediWrtSts = new EDIWriteStatus();
+        RequesterRequesterNPI = requesterNPI;
+        try {
+            List <HIHConfiguration> hihConfigList = dataManager.load(HIHConfiguration.class)
+                    .query("select p from rioc_HIHConfiguration p").view("HIHConfig-view")
+                    .list();
+            if(hihConfigList == null){
+                System.out.println("HIHConfiguration parameters are not set");
+
+            }else if(hihConfigList.size() >0) {
+                String senderEDI = "";
+                Iterator<HIHConfiguration> hihConfigurationIterator = hihConfigList.iterator();
+                if (hihConfigurationIterator.hasNext()) {
+                    HIHConfiguration hihConfigParam = hihConfigurationIterator.next();
+                    senderEDI = hihConfigParam.getEdiID();
+                }
+                if (senderEDI != null && !(senderEDI.isEmpty())) {
+                    ediWrtSts = x12278.EDIWriter(input, senderEDI, rcvrEDI,UUID.randomUUID().toString());
+                    Hashtable <String, String> err999Key = ediWrtSts.getError999Key();
+                    System.out.println("After Parsing HashTable Method Inside Service Bean:");
+                    System.out.println("------------------------------------------------------");
+                    System.out.println("EDI String: " + ediWrtSts.getEDIString());
+                    System.out.println("Validation Status: " + ediWrtSts.getStatus());
+                    System.out.println("Validation Status Code: " + ediWrtSts.getStatus_code());
+                    System.out.println("Document Control Number: "+ediWrtSts.getPwk());
+                    System.out.println("Error Message: "+ediWrtSts.getErr_message());
+                    System.out.println("Error Element: "+ediWrtSts.getErr_dataelement());
+                    System.out.println("Error 999 Key: "+ediWrtSts.getError999Key());
+
+                    // Retrieving EDIString, status_code, status from X12EDIReadWriter class File
+                    try {
+                        if (ediWrtSts.getEDIString() != null && !(ediWrtSts.getEDIString().isEmpty())) {
+                            System.out.println("EDI STring: "+ediWrtSts.getEDIString());
+                            x12278ValidStatus.setEDI(ediWrtSts.getEDIString());
+                        } else {
+                            // Setting Default Values to X12278ValidationStatus class
+                            x12278ValidStatus.setEDI("");
+                        }
+                        x12278ValidStatus.setStatusCode(ediWrtSts.getStatus_code());
+                        x12278ValidStatus.setStatus(ediWrtSts.getStatus());
+                        x12278ValidStatus.setErrorMessage(ediWrtSts.getErr_message());
+                        x12278ValidStatus.setPwk(ediWrtSts.getPwk());
+                        x12278ValidStatus.setError999Key(ediWrtSts.getError999Key());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                {
+                    System.out.println("Sender EDI is: "+senderEDI);
+                }
+            }
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            System.out.println(e.toString());
+        }
+
+        return x12278ValidStatus;
+    }
+
+
 
     @Override
     public Submission SubmiteMDRRegFile(Providers prov, boolean bRegister) {

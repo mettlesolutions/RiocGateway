@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/screen/window.xsd"
+        caption="msg://editorCaption"
+        focusComponent="form"
+        messagesPack="com.mettles.rioc.web.padocument">
+
+        <data>
+            <instance id="pADocumentDc"
+                      class="com.mettles.rioc.entity.PADocument"
+                      view="pADocument-view">
+                <loader/>
+            </instance>
+        </data>
+        <dialogMode height="AUTO" width="600" modal="true" forceDialog="true"/>
+        <layout expand="scrollBox" spacing="true">
+            <scrollBox id="scrollBox" spacing="true">
+                <form id="form" dataContainer="pADocumentDc">
+                    <column width="250px">
+                        <textField id="titleField" property="title"/>
+                        <textField id="commentsField" property="comments"/>
+                        <textField id="filenameField" property="filename"/>
+                        <upload id="fileDescriptorField" fileStoragePutMode="IMMEDIATE" property="fileDescriptor"
+                                showFileName="true" required="true"/>
+                        <lookupField id="languageField" property="language"/>
+                        <lookupField id="document_typeField" property="document_type" required="true"/>
+                    </column>
+                </form>
+            </scrollBox>
+            <hbox id="editActions" spacing="true">
+                <button id="winCommitClose" action="windowCommitAndClose"/>
+                <button id="winClose" action="windowClose"/>
+            </hbox>
+        </layout>
+    </window>
+
+

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns="http://schemas.haulmont.com/cuba/rest-services-v2.xsd">
+    <service name="rioc_X12278SubmissionService">
+        <method name="ReadEDIString">
+            <param name="ediString" type="java.lang.String"/>
+        </method>
+    </service>
+</services>
+

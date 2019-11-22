@@ -48,6 +48,33 @@
     <view entity="rioc_Address" name="address-view" extends="_local">
         <property name="state"  view="state-view"/>
     </view>
-
-
+    <view entity="rioc_PADocument" name="pADocument-view" extends="_local">
+        <property name="fileDescriptor" view="filedescriptor-view"/>
+    </view>
+    <view entity="rioc_PAError" name="pAError-view" extends="_local">
+        <property name="createTs"/>
+        <property name="createdBy"/>
+        <property name="updateTs"/>
+        <property name="updatedBy"/>
+    </view>
+    <view entity="rioc_PANotificationSlot" name="pANotificationSlot-view" extends="_local">
+        <property name="field"/>
+        <property name="value"/>
+        <!--<property name="splitInformation"/> -->
+        <property name="createTs"/>
+    </view>
+    <view entity="rioc_PAStatusChange" name="pAStatusChange-view" extends="_local">
+        <property name="status"/>
+        <property name="createTs"/>
+        <property name="result"/>
+        <!--<property name="splitInformation"/> -->
+        <property name="esmdTransactionId"/>
+    </view>
+    <view entity="rioc_X12278Submission" name="x12278Submission-view" extends="_local">
+        <property name="intendedRecepient" view="IntendedRecepient"/>
+        <property name="paError" view="pAError-view"/>
+        <property name="paNotificationSlot" view="pANotificationSlot-view"/>
+        <property name="paStatusChange" view="pAStatusChange-view"/>
+        <property name="paDocument" view="pADocument-view"/>
+    </view>
 </views>

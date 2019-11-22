@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/screen/window.xsd"
+        caption="msg://browseCaption"
+        focusComponent="x12278SubmissionsTable"
+        messagesPack="com.mettles.rioc.web.x12278submission">
+
+    <data readOnly="true">
+        <collection id="x12278SubmissionsDc"
+                    class="com.mettles.rioc.entity.X12278Submission"
+                    view="x12278Submission-view">
+            <loader id="x12278SubmissionsDl">
+                <query>
+                    <![CDATA[select e from rioc_X12278Submission e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="x12278SubmissionsTable"
+            spacing="true">
+        <filter id="filter"
+                applyTo="x12278SubmissionsTable"
+                dataLoader="x12278SubmissionsDl">
+            <properties include=".*"/>
+        </filter>
+
+        <groupTable id="x12278SubmissionsTable"
+                    width="100%"
+                    dataContainer="x12278SubmissionsDc">
+            <actions>
+                <action id="create" type="create"/>
+                <action id="edit" type="edit"/>
+                <action id="remove" type="remove"/>
+                <action id="refresh" type="refresh"/>
+            </actions>
+            <columns>
+                <column id="intendedRecepient"/>
+                <column id="esmdTransactionId" caption="Transaction ID"/>
+                <column id="status" visible="false" editable="false"/>
+            </columns>
+            <rowsCount/>
+            <buttonsPanel id="buttonsPanel"
+                          alwaysVisible="true">
+                <button id="createBtn" action="x12278SubmissionsTable.create"/>
+                <button id="editBtn" action="x12278SubmissionsTable.edit"/>
+                <button id="removeBtn" action="x12278SubmissionsTable.remove"/>
+                <button id="refreshBtn" action="x12278SubmissionsTable.refresh"/>
+            </buttonsPanel>
+        </groupTable>
+        <hbox id="lookupActions" spacing="true" visible="false">
+            <button action="lookupSelectAction"/>
+            <button action="lookupCancelAction"/>
+        </hbox>
+    </layout>
+</window>

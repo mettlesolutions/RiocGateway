@@ -17,11 +17,11 @@ import java.util.List;
 @Entity(name = "rioc_Submission")
 @PublishEntityChangedEvents
 public class Submission extends BaseLongIdEntity {
-    @Column(name = "patient_address_zip")
-    protected String patientAddressZip;
+    /*@Column(name = "patient_address_zip")
+    protected String patientAddressZip;//
 
     @Column(name = "last_name")
-    protected String lastName;
+    protected String lastName;//*/
 
     @Lookup(type = LookupType.DROPDOWN, actions = {"lookup"})
     @NotNull
@@ -29,60 +29,64 @@ public class Submission extends BaseLongIdEntity {
     @JoinColumn(name = "intended_recepient")
     protected Recepient intendedRecepient;
 
-    @Lob
+    /*@Lob
     @Column(name = "message")
-    protected String message;
+    protected String message;//
 
     @Column(name = "is_non_claimant")
-    protected Boolean isNonClaimant;
+    protected Boolean isNonClaimant;//
 
     @Column(name = "first_name")
-    protected String firstName;
+    protected String firstName;//
 
     @Column(name = "has_first_witness_signature")
-    protected Boolean hasFirstWitnessSignature;
+    protected Boolean hasFirstWitnessSignature;//
 
     @Column(name = "middle_name")
-    protected String middleName;
+    protected String middleName;// */
 
     @Lob
     @Column(name = "comments")
     protected String comments;
 
-    @Temporal(TemporalType.DATE)
+    /*@Temporal(TemporalType.DATE)
     @Column(name = "date_of_birth")
-    protected Date dateOfBirth;
+    protected Date dateOfBirth;//
 
     @Column(name = "is_sample")
-    protected Boolean isSample;
+    protected Boolean isSample;//
 
     @Column(name = "patient_address_city")
-    protected String patientAddressCity;
+    protected String patientAddressCity;//*/
 
     @Column(name = "author_type")
     protected String authorType =  AuthorType.institution.getId();
 
+    /*
     @Column(name = "phonenumber")
-    protected String phonenumber;
+    protected String phonenumber;//
 
     @Column(name = "has_second_witness_signature")
-    protected Boolean hasSecondWitnessSignature;
+    protected Boolean hasSecondWitnessSignature;//
 
     @Column(name = "patient_address")
-    protected String patientAddress;
+    protected String patientAddress;//
 
     @Column(name = "social_security_number")
-    protected String socialSecurityNumber;
+    protected String socialSecurityNumber;//
 
     @Column(name = "patient_address_street")
-    protected String patientAddressStreet;
+    protected String patientAddressStreet;//
+    */
 
     @NotNull
     @Column(name = "author_npi", nullable = false)
     protected String authorNPI;
 
+    /*
     @Column(name = "has_signature_of_patient")
-    protected Boolean hasSignatureOfPatient;
+    protected Boolean hasSignatureOfPatient;//
+    */
 
     @Column(name = "stage")
     protected String stage = "Draft";
@@ -103,11 +107,13 @@ public class Submission extends BaseLongIdEntity {
     @Column(name = "status")
     protected String status;
 
+    /*
     @Column(name = "patient_address_state")
-    protected String patientAddressState;
+    protected String patientAddressState;//
 
     @Column(name = "has_message")
-    protected Boolean hasMessage;
+    protected Boolean hasMessage;//
+    */
 
     @Column(name = "esmd_case_id")
     protected String esmdCaseId;
@@ -281,6 +287,7 @@ public class Submission extends BaseLongIdEntity {
         this.esmdCaseId = esmdCaseId;
     }
 
+    /*
     public Boolean getHasMessage() {
         return hasMessage;
     }
@@ -296,6 +303,7 @@ public class Submission extends BaseLongIdEntity {
     public void setPatientAddressState(String patientAddressState) {
         this.patientAddressState = patientAddressState;
     }
+    */
 
     public String getStatus() {
         return status;
@@ -337,6 +345,7 @@ public class Submission extends BaseLongIdEntity {
         this.stage = stage;
     }
 
+    /*
     public Boolean getHasSignatureOfPatient() {
         return hasSignatureOfPatient;
     }
@@ -345,6 +354,7 @@ public class Submission extends BaseLongIdEntity {
         this.hasSignatureOfPatient = hasSignatureOfPatient;
     }
 
+    */
     public String getAuthorNPI() {
         return authorNPI;
     }
@@ -353,6 +363,7 @@ public class Submission extends BaseLongIdEntity {
         this.authorNPI = authorNPI;
     }
 
+    /*
     public String getPatientAddressStreet() {
         return patientAddressStreet;
     }
@@ -416,7 +427,7 @@ public class Submission extends BaseLongIdEntity {
     public void setDateOfBirth(Date dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
     }
-
+    */
     public String getComments() {
         return comments;
     }
@@ -425,6 +436,7 @@ public class Submission extends BaseLongIdEntity {
         this.comments = comments;
     }
 
+    /*
     public String getMiddleName() {
         return middleName;
     }
@@ -461,6 +473,7 @@ public class Submission extends BaseLongIdEntity {
         return message;
     }
 
+    */
     public Recepient getIntendedRecepient() {
         return intendedRecepient;
     }
@@ -469,6 +482,7 @@ public class Submission extends BaseLongIdEntity {
         this.intendedRecepient = intendedRecepient;
     }
 
+    /*
     public String getLastName() {
         return lastName;
     }
@@ -484,4 +498,5 @@ public class Submission extends BaseLongIdEntity {
     public void setPatientAddressZip(String patientAddressZip) {
         this.patientAddressZip = patientAddressZip;
     }
+    */
 }

@@ -1,6 +1,6 @@
 package com.mettles.rioc.portal.customcontrollers;
 
-import com.mettles.rioc.X12275SubmissionStatus;
+import com.mettles.rioc.*;
 import com.mettles.rioc.entity.*;
 import com.mettles.rioc.entity.Error;
 import com.mettles.rioc.portal.jsonobjects.*;
@@ -8,16 +8,16 @@ import com.mettles.rioc.portal.jsonobjects.*;
 import com.haulmont.cuba.core.entity.FileDescriptor;
 import com.haulmont.cuba.core.global.*;
 import com.haulmont.cuba.portal.App;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.web.bind.annotation.*;
 import com.mettles.rioc.service.SubmissionService;
 import org.springframework.web.multipart.MultipartFile;
-;
+
 
 import javax.inject.Inject;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -38,6 +38,8 @@ public class RiocCustomController {
 
     @Inject
     private FileLoader fileLoader;
+
+    private String EDI;
 
     @PostMapping("/provider")
     public @ResponseBody
@@ -963,5 +965,999 @@ public class RiocCustomController {
         return retVal;
 
     }
+
+    //X12278Submission -PA
+
+    private Hashtable<String, String> inputKey = new Hashtable<String, String>();
+    //private Hashtable<Long, Object> err999Key = new Hashtable<Long, Object>();
+    private Hashtable<String, String> err999Key = new Hashtable<String,String>();
+
+
+    //New Code with excel_file_name as String input
+    @PostMapping("/x12278submission")
+    public @ResponseBody
+    X12278CreateSubmissionResponseModel createX12278Submission(@RequestBody X12278CreateSubmissionRequestModel lb) {
+
+        X12278CreateSubmissionResponseModel temp = new X12278CreateSubmissionResponseModel();
+        CommitContext commitContext = new CommitContext();
+        System.out.println("Inside Create X12278 Submission");
+
+        if(lb.getIntended_recepient().isEmpty() || lb.getIntended_recepient() == null)
+        {
+            temp.setCall_error_code("1");
+            temp.setCall_error_description("Intended Recepient Should not be NULL");
+            return temp;
+        }
+        else{
+            System.out.println("Intended Recepient: "+lb.getIntended_recepient());
+            try {
+                Recepient intdRecp = datamanager.loadValue(
+                        "select o from rioc_Recepient o " +
+                                "where o.oid = :recep ", Recepient.class)
+                        .parameter("recep", lb.getIntended_recepient().trim())
+                        .one();
+                if (intdRecp == null) {
+                    temp.setCall_error_code("2");
+                    temp.setCall_error_description("Provided Intended Recepient not found");
+                    return temp;
+                }
+                else{
+                    try {
+                        if (!lb.getPa_document().isEmpty() && lb.getPa_document().size() > 0) {
+                            //Creating X12278 Submission Details to DB
+                            X12278Submission x12278subTemp = datamanager.create(X12278Submission.class);
+                            x12278subTemp.setIntendedRecepient(intdRecp);
+
+                            datamanager.commit(x12278subTemp);
+                            System.out.println("X12278Submission Entity ID: " + x12278subTemp.getId());
+
+                            //Adding Documents in PA Document to DB
+                            List<PADocument> docSubSet = new ArrayList<>();
+                            Iterator<PaDocumentSetJsonObject> dociterator = lb.getPa_document().iterator();
+                            while (dociterator.hasNext()) {
+                                DocumentType docType = null;
+                                SupportedLanguage supLangType = null;
+                                PADocument docTemp = datamanager.create(PADocument.class);
+                                PaDocumentSetJsonObject dtJsonTemp = dociterator.next();
+                                docTemp.setFilename(dtJsonTemp.getFilename());
+                                docTemp.setTitle(dtJsonTemp.getTitle());
+                                docTemp.setComments(dtJsonTemp.getComments());
+                                docTemp.setLanguage(supLangType.fromId(dtJsonTemp.getLanguage()));
+                                docTemp.setDocument_type(docType.fromId(dtJsonTemp.getDocument_type()));
+                                docTemp.setX12278submissionID(x12278subTemp);
+                                commitContext.addInstanceToCommit(docTemp);
+                                datamanager.commit(docTemp);
+                                docSubSet.add(docTemp);
+                                System.out.println("Provided Document File Name: "+docTemp.getFilename());
+                                System.out.println("Provided Document Title: "+docTemp.getTitle());
+                                System.out.println("Provided Document Comments: "+docTemp.getComments());
+                                System.out.println("Provided Document Language: "+docTemp.getLanguage());
+                                System.out.println("Provided Document Document_type: "+docTemp.getDocument_type());
+                                System.out.println("Provided Document X12278submissionID: "+docTemp.getX12278submissionID());
+                            }
+                            x12278subTemp.setPaDocument(docSubSet);
+                            System.out.println("X12278 PA Document Details: "+x12278subTemp.getPaDocument());
+
+                            System.out.println("X12278 Submission ID: "+x12278subTemp.getId().toString());
+                            temp.setX12278submission_id(x12278subTemp.getId().toString());
+                            return temp;
+
+                        } else {
+                            temp.setCall_error_code("1");
+                            temp.setCall_error_description("Document not found");
+                            return temp;
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        temp.setCall_error_code("3");
+                        temp.setCall_error_description(e.getMessage());
+                        return temp;
+                    }
+
+                }
+            }
+            catch(Exception e)
+            {
+                temp.setCall_error_code("2");
+                temp.setCall_error_description("Provided Intended Recepient is Invalid or not found ");
+                return temp;
+            }
+        }
+    }
+
+
+    @RequestMapping(value="/x12278submission/{id}", method= POST)
+    public @ResponseBody
+    X12278SubmissionResponseModel PostX12278Submission(@PathVariable Long id,@ModelAttribute PostX12278SubmissionRequest tempReqObj){
+
+        CommitContext commitContext = new CommitContext();
+        X12278SubmissionResponseModel retVal = new X12278SubmissionResponseModel();
+        List<MultipartFile> localFiles = tempReqObj.getUploadFiles();
+        MultipartFile inputFile = tempReqObj.getExcel_file();
+        X12278Submission x12sub = null;
+
+        retVal.setX12278submission_id(id.toString());
+
+        //Checking given Input request is valid or not
+        try {
+            x12sub = datamanager.load(X12278Submission.class).id(id).view("x12278Submission-view").one();
+            //err999Key.get(id);
+            //System.out.println("Error 999 Key HashTable: "+err999Key);
+
+        }catch(Exception e){
+            retVal.setCall_error_code("2");
+            retVal.setCall_error_description("No records found for the submission Id provided");
+            return retVal;
+        }
+        if(x12sub == null){
+            retVal.setCall_error_code("2");
+            retVal.setCall_error_description("No records found for the submission Id provided");
+            return retVal;
+        }
+        if(localFiles==null || (localFiles.size() ==0)){
+            retVal.setCall_error_code("1");
+            retVal.setCall_error_description("You should submit at least one Document file");
+            return retVal;
+        }
+        List<PADocument> docObj = x12sub.getPaDocument();
+        if(docObj.size() != localFiles.size())
+        {
+            retVal.setCall_error_code("2");
+            retVal.setCall_error_description("Incorrect number of Documents sent");
+            return retVal;
+        }
+
+        if(inputFile==null || inputFile.isEmpty())
+        {
+            retVal.setCall_error_code("1");
+            retVal.setCall_error_description("You should upload Input File");
+            return retVal;
+        }
+
+        System.out.println("Provided Recepient EDI ID: "+x12sub.getIntendedRecepient().getEdiID());
+
+
+        // Parsing provided Input Excel File
+        if (x12sub.getIntendedRecepient().getEdiID() != null && !x12sub.getIntendedRecepient().getEdiID().isEmpty()) {
+            String iRecEDI = x12sub.getIntendedRecepient().getEdiID();
+
+            System.out.println("Input File Size: "+inputFile.getSize());
+
+            if (inputFile.getSize() != 0) {
+
+                System.out.println("Input File Name: "+inputFile.getOriginalFilename());
+                System.out.println("Input File Extension: "+FilenameUtils.getExtension(inputFile.getOriginalFilename()));
+                if (FilenameUtils.getExtension(inputFile.getOriginalFilename()).matches("xlsx|xls")) {
+                    try {
+                        File file = new File(inputFile.getOriginalFilename());
+                        System.out.println("converted FIle Name: "+file.getName());
+                        //file.createNewFile();
+                        inputFile.transferTo(file);
+                        System.out.println("COnverted File Size: "+file.length());
+
+                        inputKey = createHashTable(file);
+                        System.out.println("Input Hash Table: " + inputKey);
+
+                        if (inputKey == null || inputKey.isEmpty()) {
+                            System.out.println("Uploaded Excel File is Empty or Incorrect, Kindly check Uploaded File and try Reupload");
+                            retVal.setCall_error_code("4");
+                            retVal.setCall_error_description("Uploaded Excel File is Empty or Incorrect, Kindly check Uploaded File and try Reupload");
+                            return retVal;
+                        } else if (inputKey.size() > 0) {
+                            String requesterNPI = inputKey.get("RequesterRequesterNPI");
+                            if (requesterNPI == null || requesterNPI.isEmpty()) {
+                                System.out.println("RequesterRequesterNPI Field is empty, Missing Field in the provided Excel File");
+                                retVal.setCall_error_code("5");
+                                retVal.setCall_error_description("RequesterRequesterNPI Field is empty, Missing Field in provided the Excel File");
+                                return retVal;
+                            } else {
+                                try {
+                                    System.out.println("Requested requesterNPI: " + requesterNPI);
+
+                                    //Calling Service for Parsing the HashTable
+                                    X12278ValidationStatus x12278validstus = AppBeans.get(SubmissionService.class).ParseHashtable(inputKey, iRecEDI, requesterNPI);
+                                    System.out.println("Parse Validation Status of Uploaded Document:");
+                                    System.out.println("------------------------------------------------");
+                                    System.out.println("Validation Status: " + x12278validstus.getStatus());
+                                    System.out.println("Validation Status Code: " + x12278validstus.getStatusCode());
+                                    System.out.println("Validation Error Message: " + x12278validstus.getErrorMessage());
+
+                                    if (x12278validstus.getStatusCode() == 0 && x12278validstus.getStatus().equalsIgnoreCase("Success")) {
+
+                                        System.out.println("Validation Error 999 HashTable: " + x12278validstus.getError999Key());
+                                        System.out.println("EDI String: " + x12278validstus.getEDI());
+                                        System.out.println("PWK: " + x12278validstus.getPwk());
+
+                                        EDI = x12278validstus.getEDI();
+
+                                        if (EDI != null && !EDI.isEmpty()) {
+                                            String status = x12278validstus.getStatus();
+                                            UUID uuid = UUID.randomUUID();
+                                            x12sub.setAttachmentControlNumber(x12278validstus.getPwk());
+                                            x12sub.setX12UnqID(uuid.toString());
+
+                                            err999Key = x12278validstus.getError999Key();
+
+                                            //datamanager.commit(x12sub);
+
+                                            System.out.println("X12278 Submission Unique ID: " + x12sub.getX12UnqID());
+                                            System.out.println("Document Attachment Control Number: " + x12sub.getAttachmentControlNumber());
+                                            //System.out.println("X12278 Submission Unique ID: " + x12278subTemp.getEdiID());
+                                            //commitContext.addInstanceToCommit(x12278subTemp);
+                                            //datamanager.commit(x12278subTemp);
+
+                                        }
+
+                                    } else if (x12278validstus.getStatusCode() == 1) {
+                                        retVal.setCall_error_code("4");
+                                        retVal.setCall_error_description(x12278validstus.getErrorMessage());
+                                        return retVal;
+                                    } else if (x12278validstus.getStatusCode() == 2) {
+                                        retVal.setCall_error_code("4");
+                                        retVal.setCall_error_description(x12278validstus.getErrorMessage());
+                                        return retVal;
+                                    } else if (x12278validstus.getStatusCode() == 3) {
+                                        retVal.setCall_error_code("4");
+                                        retVal.setCall_error_description(x12278validstus.getErrorMessage());
+                                        return retVal;
+                                    }
+                                }
+                                catch (Exception e) {
+                                    e.printStackTrace(); }
+                            }
+
+                        }
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        retVal.setCall_error_code("4");
+                        retVal.setCall_error_description("Input Excel File conversion/Loading Failed from Multipart File to File");
+                        return retVal;
+                    }
+                }
+                //Not Valid Input File
+                else {
+                    System.out.println("Input File is invalid, should be Excel Sheet");
+                    retVal.setCall_error_code("2");
+                    retVal.setCall_error_description("Input File is invalid, should be Excel Sheet");
+                    return retVal;
+                }
+            }
+            //input File size is 0
+            else {
+                System.out.println("Input File is Empty or Incorrect");
+                retVal.setCall_error_code("2");
+                retVal.setCall_error_description("Input File is Empty or Incorrect");
+                return retVal;
+            }
+
+        }
+        //NO EDIID for available for provided Intendent Recepient
+        else {
+            System.out.println("EDI ID is not found for provided Recepient ");
+            retVal.setCall_error_code("2");
+            retVal.setCall_error_description("EDI ID is not found for provided Recepient");
+            return retVal;
+        }
+
+        //End of Parsing Input FIle
+
+
+        //Updating Uploaded Documents to PA Document File Descriptor
+        System.out.println(localFiles.size());
+        Iterator<MultipartFile> filesIt = localFiles.iterator();
+        HashMap<String,MultipartFile> dupFileUpload = new HashMap<>();
+        HashMap<String,PADocument> dupDocUpload = new HashMap<>();
+        while(filesIt.hasNext()){
+
+            Iterator<PADocument> docsetItr = docObj.iterator();
+            MultipartFile tmpFile = filesIt.next();
+            while(docsetItr.hasNext()){
+                PADocument tempDt = docsetItr.next();
+                System.out.println("CHecking provided File Details and uploaded files are same or not");
+                System.out.println("------------------------------------------------------------------");
+                System.out.println("Uploaded File Name: "+tmpFile.getOriginalFilename());
+                System.out.println("PA Document File Name: "+tempDt.getFilename());
+                if(tempDt.getFilename().equals(tmpFile.getOriginalFilename())){
+
+                    if(!dupFileUpload.containsKey(tempDt.getId().toString())) {
+                        dupFileUpload.put(tempDt.getId().toString(), tmpFile);
+                        dupDocUpload.put(tempDt.getId().toString(), tempDt);
+                        break;
+                    }
+
+                }
+            }
+        }
+        if(dupFileUpload.size() != localFiles.size())
+        {
+            retVal.setCall_error_code("4");
+            retVal.setCall_error_description("File not found in the document list");
+            return retVal;
+        }
+
+        for (Map.Entry me : dupFileUpload.entrySet()) {
+            MultipartFile locFile = (MultipartFile) me.getValue();
+            System.out.println("Uploaded File Name: "+locFile.getOriginalFilename());
+            PADocument locDt = (PADocument) dupDocUpload.get(me.getKey());
+            FileDescriptor fileDescriptor = datamanager.create(FileDescriptor.class);
+            fileDescriptor.setName(locFile.getOriginalFilename());
+            System.out.println("File Extension: " + FilenameUtils.getExtension(locFile.getOriginalFilename()));
+            fileDescriptor.setExtension(FilenameUtils.getExtension(locFile.getOriginalFilename()));
+            //fileDescriptor.setExtension("pdf"); // As we will be supporting only pdf
+            fileDescriptor.setCreateDate(new Date());
+            try {
+
+                //byte[] bytes = locFile.getBytes();
+                fileDescriptor.setSize((long) locFile.getSize());
+                InputStream is = locFile.getInputStream();
+                fileLoader.saveStream(fileDescriptor, () -> is);
+            } catch (FileStorageException | IOException e) {
+                System.out.println("error occured");
+                e.printStackTrace();
+                retVal.setCall_error_code("4");
+                retVal.setCall_error_description(e.getMessage());
+                return retVal;
+            }
+            datamanager.commit(fileDescriptor);
+            locDt.setFileDescriptor(fileDescriptor);
+            datamanager.commit(locDt);
+
+        }
+        //datamanager.commit(x12sub);
+
+        //X12278Submission to the ESMD
+        if(!err999Key.isEmpty()) {
+            submitX12278Document(x12sub, retVal, EDI, err999Key);
+        }
+
+
+    return retVal;
+    }
+
+
+    public void submitX12278Document(X12278Submission x12sub,X12278SubmissionResponseModel retVal,String EDIString, Hashtable<String,String> err999KeyVal) {
+        //X12278SubmissionResponseModel retVal = new X12278SubmissionResponseModel();
+        System.out.println("Sending Document to ESMD from Portal");
+        System.out.println("-------------------------------------");
+        System.out.println("X12278Submission: "+x12sub);
+        System.out.println("EDI String: "+EDIString);
+        System.out.println("Error 999 Key: "+err999KeyVal);
+        try {
+            X12278SubmissionStatus x12278subStatus = AppBeans.get(SubmissionService.class).SubmitX12278Submission(x12sub, EDIString, err999KeyVal);
+
+            //retVal.setX12278submission_id(x12sub.getId().toString());
+
+            String status = x12278subStatus.getErrorMessage();
+            CommitContext commitContext = new CommitContext();
+            System.out.println("Status - Message From ESMD: " + status);
+
+            if (status != null && !status.isEmpty()) {
+                if (x12278subStatus.getErrorCode().equalsIgnoreCase("-1")) {
+
+                    try {
+                        x12sub.setStatus("FAILED");
+
+                        //CommitContext commitContext = new CommitContext();
+                        PAError paErrTemp = datamanager.create(PAError.class);
+                        System.out.println(" PA Error Trans Type: " + x12278subStatus.getTransType());
+                        System.out.println(" PA Error Description: " + x12278subStatus.getErrorMessage());
+                        System.out.println(" PA Error Code: " + x12278subStatus.getErrorCode());
+                        paErrTemp.setX12278submissionID(x12sub);
+                        paErrTemp.setTransType(x12278subStatus.getTransType());
+                        paErrTemp.setDescription(x12278subStatus.getErrorMessage());
+                        paErrTemp.setErrorCode(x12278subStatus.getErrorCode());
+                        commitContext.addInstanceToCommit(paErrTemp);
+
+                        retVal.setStatus("FAILED");
+                        retVal.setCall_error_code(x12278subStatus.getErrorCode());
+                        retVal.setCall_error_description(x12278subStatus.getErrorMessage());
+                        retVal.setTransType(x12278subStatus.getTransType());
+
+                        //return retVal;
+                    }
+                    catch(Exception e)
+                    {
+                        System.out.println("error occured");
+                        retVal.setStatus("FAILED");
+                        retVal.setCall_error_code("4");
+                        retVal.setCall_error_description(e.getMessage());
+                        retVal.setTransType(x12278subStatus.getTransType());
+                        e.printStackTrace();
+                    }
+
+                }
+
+                //In Case of ESMD Server Failure i.e In Case of HIH Configuration is Null
+                else if (x12278subStatus.getErrorCode().equalsIgnoreCase("Failure")) {
+
+                    try {
+                        x12sub.setStatus("FAILED");
+
+                        //CommitContext commitContext = new CommitContext();
+                        PAError paErrTemp = datamanager.create(PAError.class);
+                        System.out.println(" PA Error Trans Type: " + x12278subStatus.getTransType());
+                        System.out.println(" PA Error Description: " + x12278subStatus.getErrorMessage());
+                        System.out.println(" PA Error Code: " + x12278subStatus.getErrorCode());
+                        paErrTemp.setX12278submissionID(x12sub);
+                        paErrTemp.setTransType(x12278subStatus.getTransType());
+                        paErrTemp.setDescription(x12278subStatus.getErrorMessage());
+                        paErrTemp.setCodeContext(x12278subStatus.getErrorCode());
+                        commitContext.addInstanceToCommit(paErrTemp);
+
+                        retVal.setStatus("FAILED");
+                        retVal.setTransType(x12278subStatus.getTransType());
+                        retVal.setCall_error_code(x12278subStatus.getErrorCode());
+                        retVal.setCall_error_description(x12278subStatus.getErrorMessage());
+
+                        //return retVal;
+                    }
+                    catch(Exception e)
+                    {
+                        System.out.println("error occured");
+                        retVal.setStatus("FAILED");
+                        retVal.setCall_error_code("4");
+                        retVal.setCall_error_description(e.getMessage());
+                        retVal.setTransType(x12278subStatus.getTransType());
+                        e.printStackTrace();
+                    }
+                }
+
+                //In Case of Internal Errors
+                else if (status.equalsIgnoreCase("Internal Error")) {
+
+                    try {
+                        x12sub.setStatus("FAILED");
+
+                        //CommitContext commitContext = new CommitContext();
+                        PAError paErrTemp = datamanager.create(PAError.class);
+                        System.out.println(" PA Error Trans Type: " + x12278subStatus.getTransType());
+                        System.out.println(" PA Error Description: " + x12278subStatus.getErrorMessage());
+                        System.out.println(" PA Error Context: " + x12278subStatus.getErrorCode());
+                        paErrTemp.setX12278submissionID(x12sub);
+                        paErrTemp.setTransType(x12278subStatus.getTransType());
+                        paErrTemp.setDescription(x12278subStatus.getErrorMessage());
+                        paErrTemp.setCodeContext(x12278subStatus.getErrorCode());
+                        commitContext.addInstanceToCommit(paErrTemp);
+
+                        retVal.setStatus("FAILED");
+                        retVal.setCall_error_code(x12278subStatus.getErrorCode());
+                        retVal.setCall_error_description(x12278subStatus.getErrorMessage());
+                        retVal.setTransType(x12278subStatus.getTransType());
+
+                        //return retVal;
+                    }
+                    catch(Exception e)
+                    {
+                        System.out.println("error occured");
+                        e.printStackTrace();
+                        retVal.setStatus("FAILED");
+                        retVal.setCall_error_code("4");
+                        retVal.setCall_error_description(e.getMessage());
+                        retVal.setTransType(x12278subStatus.getTransType());
+                    }
+                }
+
+                // In Case OF ERROR on 999 After Submission TO ESMD Connect
+                if (status.equalsIgnoreCase("Error on 999")) {
+                    System.out.println("ERROR on 999 X12278 Submission Edit Logic");
+                    System.out.println("--------------------------------------------");
+                    System.out.println("Checking Parse on ERROR on 999 Segment Error Length: " + x12278subStatus.getSegErrs().size());
+                    try {
+                        x12sub.setStatus("FAILED");
+                        retVal.setStatus("FAILED");
+                        //retVal.setSegErrs(x12278subStatus.getSegErrs());
+                        //this.dataManager.commit(x12sub);
+                        //setting data into PA ERROR Entity
+                        ArrayList<ErrorInfo> paErrlist = x12278subStatus.getSegErrs();
+
+                        if (x12278subStatus.getSegErrs() != null) {
+                            Iterator<ErrorInfo> errinfoIt = x12278subStatus.getSegErrs().iterator();
+
+                            ArrayList<X12278ErrorJsonObject> x12ErrorJsonObjArrayList = new ArrayList<>();
+
+
+                            while (errinfoIt.hasNext()) {
+                                try {
+                                    //CommitContext commitContext = new CommitContext();
+                                    PAError paErrTemp = datamanager.create(PAError.class);
+                                    ErrorInfo errIn = errinfoIt.next();
+                                    X12278ErrorJsonObject errRetVal = new X12278ErrorJsonObject();
+                                    System.out.println("Error Context: " + errIn.getErrorCtx());
+                                    System.out.println("Error Code: " + errIn.getErrorCode());
+                                    System.out.println("Error Description: " + errIn.getErrorDesp());
+                                    System.out.println(" PA Error Trans TYpe: " + x12278subStatus.getTransType());
+                                    paErrTemp.setX12278submissionID(x12sub);
+                                    paErrTemp.setTransType(x12278subStatus.getTransType());
+                                    paErrTemp.setErrorCode(errIn.getErrorCode());
+                                    paErrTemp.setDescription(errIn.getErrorDesp());
+                                    paErrTemp.setCodeContext(errIn.getErrorCtx());
+                                    commitContext.addInstanceToCommit(paErrTemp);
+
+                                    errRetVal.setTrans_type(x12278subStatus.getTransType());
+                                    errRetVal.setError_code(errIn.getErrorCode());
+                                    errRetVal.setError_description(errIn.getErrorDesp());
+                                    errRetVal.setError_context(errIn.getErrorCtx());
+
+                                    //dataManager.commit(commitContext);
+                                    //this.dataManager.commit(commitContext);
+                                    x12ErrorJsonObjArrayList.add(errRetVal);
+                                }
+                                catch(Exception e){
+                                    System.out.println("error occured");
+                                    e.printStackTrace();
+                                    retVal.setStatus("FAILED");
+                                    retVal.setCall_error_code("4");
+                                    retVal.setCall_error_description(e.getMessage());
+                                    retVal.setTransType(x12278subStatus.getTransType());
+                                }
+                            }
+                            retVal.setErrJsonObjs(x12ErrorJsonObjArrayList);
+                        }
+                        //return retVal;
+                    }
+                    catch(Exception e)
+                    {
+                        System.out.println("error occured");
+                        e.printStackTrace();
+                        retVal.setStatus("FAILED");
+                        retVal.setCall_error_code("4");
+                        retVal.setCall_error_description(e.getMessage());
+                        retVal.setTransType(x12278subStatus.getTransType());
+                    }
+                }
+
+                // In Case OF Success Submission TO ESMD Connect x12278subStatus.getErrorCode().equalsIgnoreCase("Success")
+                else if (status.equalsIgnoreCase("No Error")) {
+                    System.out.println(" In Success Submission to ESMD Connect");
+                    System.out.println("------------------------------------------");
+                    System.out.println(" Error Code: " + x12278subStatus.getErrorCode());
+                    System.out.println("ESMD Transaction ID: " + x12278subStatus.getEsmdTransactionId());
+
+                    try {
+                        x12sub.setEsmdTransactionId(x12278subStatus.getEsmdTransactionId());
+                        //this.dataManager.commit(x12sub);
+
+                        System.out.println("Insert into PA STATUS CHANGE DataBase for X12278 Submission PA Request-Response to ESMD");
+                        System.out.println(" PA Status Change Trans Type: " + x12278subStatus.getTransType());
+
+                        //CommitContext commitContext2 = new CommitContext();
+                        PAStatusChange paStsChng = datamanager.create(PAStatusChange.class);
+                        paStsChng.setX12278submissionID(x12sub);
+                        //paStsChng.setTransType("X12 Transaction");
+                        paStsChng.setTransType(x12278subStatus.getTransType());
+                        paStsChng.setEsmdTransactionId(x12278subStatus.getEsmdTransactionId());
+                        paStsChng.setResult("Success");
+                        paStsChng.setStatus("PA Request-Response Success");
+
+                        //commitContext2.addInstanceToCommit(paStsChng);
+                        commitContext.addInstanceToCommit(paStsChng);
+                        //dataManager.commit(commitContext2);
+                        //this.dataManager.commit(commitContext1);
+
+                        //x12sub.setStatus("PA Request-Response Success");
+
+                        retVal.setEsmd_transaction_id(x12278subStatus.getEsmdTransactionId());
+                        retVal.setTransType(x12278subStatus.getTransType());
+
+                        System.out.println("Segment Status Information Size: " + x12278subStatus.getSegStatus().size());
+                        ArrayList<StatusInfo> paStslist = x12278subStatus.getSegStatus();
+
+                        Iterator<StatusInfo> statsInfoIt = x12278subStatus.getSegStatus().iterator();
+
+
+                        while (statsInfoIt.hasNext()) {
+
+                            try {
+                                StatusInfo stsIn = statsInfoIt.next();
+                                System.out.println("Transaction Type: " + stsIn.getTransType());
+                                System.out.println("PA Document set Submission Status Code: " + stsIn.getStatusCode());
+
+                                System.out.println("PA Document Unique ID: " + stsIn.getUniqueID());
+                                x12sub.setDocUnqID(stsIn.getUniqueID());
+                                retVal.setDoc_Unq_id(stsIn.getUniqueID());
+                                System.out.println("X12278Submission Document Unique ID: " + x12sub.getDocUnqID());
+
+                                if (stsIn.getStatusCode().equalsIgnoreCase("2")) {
+                                    try {
+                                        System.out.println("ERROR While Document Submission with Error Code: 2");
+                                        System.out.println("-----------------------------------------------------");
+                                        System.out.println("Checking ERROR while Document Submission Segment Error Length: " + x12278subStatus.getSegErrs().size());
+
+                                        x12sub.setStatus("FAILED");
+                                        retVal.setStatus("FAILED");
+
+                                        x12sub.setSuppDocMessage("FAILED");
+                                        retVal.setSUPP_DOC_MESSAGE("FAILED");
+                                        //retVal.setSegErrs(x12278subStatus.getSegErrs());
+
+                                        //setting data into PA ERROR Entity
+                                        ArrayList<ErrorInfo> paErrlist = x12278subStatus.getSegErrs();
+
+                                        Iterator<ErrorInfo> errinfoIt = x12278subStatus.getSegErrs().iterator();
+
+                                        ArrayList<X12278ErrorJsonObject> x12ErrorJsonObjArrayList = new ArrayList<>();
+
+                                        while (errinfoIt.hasNext()) {
+                                            try {
+                                                ErrorInfo errIn = errinfoIt.next();
+                                                X12278ErrorJsonObject errRetVal = new X12278ErrorJsonObject();
+                                                System.out.println("Error Context: " + errIn.getErrorCtx());
+                                                System.out.println("Error Code: " + errIn.getErrorCode());
+                                                System.out.println("Error Description: " + errIn.getErrorDesp());
+                                                System.out.println("Error Severity: " + errIn.getSeverity());
+                                                System.out.println("Error TransType: " + errIn.getTransType());
+                                                //CommitContext commitContext = new CommitContext();
+                                                PAError paErrTemp = datamanager.create(PAError.class);
+                                                //System.out.println(" PA Error Trans TYpe: "+x12278subStatus.getTransType());
+                                                paErrTemp.setX12278submissionID(x12sub);
+                                                paErrTemp.setCodeContext(errIn.getErrorCtx());
+                                                paErrTemp.setErrorCode(errIn.getErrorCode());
+                                                paErrTemp.setDescription(errIn.getErrorDesp());
+                                                paErrTemp.setSeverity(errIn.getSeverity());
+                                                paErrTemp.setTransType(errIn.getTransType());
+                                                //paErrTemp.setTransType(TransType.X12);
+
+                                                //commitContext2.addInstanceToCommit(paErrTemp);
+                                                commitContext.addInstanceToCommit(paErrTemp);
+
+                                                errRetVal.setError_context(errIn.getErrorCtx());
+                                                errRetVal.setError_code(errIn.getErrorCode());
+                                                errRetVal.setError_description(errIn.getErrorDesp());
+                                                errRetVal.setSeverity(errIn.getSeverity());
+                                                errRetVal.setTrans_type(errIn.getTransType());
+
+                                                //dataManager.commit(commitContext);
+                                                //this.dataManager.commit(commitContext);
+                                                //x12sub.setSuppDocMessage("FAILED");
+                                                //retVal.setSUPP_DOC_MESSAGE("FAILED");
+
+                                                x12ErrorJsonObjArrayList.add(errRetVal);
+                                            } catch (Exception e) {
+                                                System.out.println("error occured");
+                                                retVal.setStatus("FAILED");
+                                                retVal.setSUPP_DOC_MESSAGE("FAILED");
+                                                retVal.setCall_error_code("4");
+                                                retVal.setCall_error_description(e.getMessage());
+                                                retVal.setTransType(stsIn.getTransType());
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                        retVal.setErrJsonObjs(x12ErrorJsonObjArrayList);
+
+                                    } catch (Exception e) {
+                                        System.out.println("error occured");
+                                        retVal.setStatus("FAILED");
+                                        retVal.setSUPP_DOC_MESSAGE("FAILED");
+                                        retVal.setCall_error_code("4");
+                                        retVal.setCall_error_description(e.getMessage());
+                                        retVal.setTransType(stsIn.getTransType());
+                                        e.printStackTrace();
+                                    }
+
+                                }
+                                else if (stsIn.getStatusCode().equalsIgnoreCase("1")) {
+                                    System.out.println("ERROR While Document Submission with Error Code: 1");
+                                    System.out.println("-----------------------------------------------------");
+
+                                    try {
+                                        x12sub.setStatus("FAILED");
+                                        x12sub.setSuppDocMessage("FAILED");
+
+                                        //CommitContext commitContext = new CommitContext();
+                                        PAError paErrTemp = datamanager.create(PAError.class);
+                                        System.out.println(" PA Error Trans TYpe: " + stsIn.getTransType());
+                                        paErrTemp.setX12278submissionID(x12sub);
+                                        paErrTemp.setCodeContext(stsIn.getResult());
+                                        paErrTemp.setErrorCode(stsIn.getStatusCode());
+                                        paErrTemp.setDescription(stsIn.getStatus());
+                                        //paErrTemp.setSeverity();
+                                        paErrTemp.setTransType(stsIn.getTransType());
+
+                                        commitContext.addInstanceToCommit(paErrTemp);
+
+                                        //dataManager.commit(commitContext);
+                                        //this.dataManager.commit(commitContext);
+
+                                        //x12sub.setSuppDocMessage(paStslist.get(x).getResult());
+
+
+                                        retVal.setStatus("FAILED");
+                                        retVal.setSUPP_DOC_MESSAGE("FAILED");
+                                        retVal.setCall_error_code(stsIn.getStatusCode());
+                                        retVal.setCall_error_description(stsIn.getStatus());
+                                        retVal.setTransType(stsIn.getTransType());
+                                        retVal.setError_code_context(stsIn.getResult());
+
+                                        //return retVal;
+
+                                    } catch (Exception e) {
+                                        System.out.println("error occured");
+                                        retVal.setStatus("FAILED");
+                                        retVal.setSUPP_DOC_MESSAGE("FAILED");
+                                        retVal.setCall_error_code("4");
+                                        retVal.setCall_error_description(e.getMessage());
+                                        retVal.setTransType(stsIn.getTransType());
+                                        e.printStackTrace();
+                                    }
+
+                                }
+                                else if (stsIn.getStatusCode().equalsIgnoreCase("0")) {
+                                    try {
+                                        x12sub.setStatus("SUCCESS");
+                                        retVal.setStatus("SUCCESS");
+                                        x12sub.setSuppDocMessage(stsIn.getResult());
+                                        retVal.setSUPP_DOC_MESSAGE(stsIn.getResult());
+
+                                        ArrayList<X12278StatusChangeJsonObject> x12StsChngJsonObjArrayList = new ArrayList<>();
+
+                                        X12278StatusChangeJsonObject stsChngVal = new X12278StatusChangeJsonObject();
+                                        //CommitContext commitContext1 = new CommitContext();
+                                        PAStatusChange paStChngTemp = datamanager.create(PAStatusChange.class);
+                                        System.out.println(" PA Status Change Trans Type: " + stsIn.getTransType());
+                                        System.out.println(" PA Status Change Result: " + stsIn.getResult());
+                                        System.out.println(" PA Status Change Status: " + stsIn.getStatus());
+                                        //System.out.println(" PA Status Change Esmd Transaction ID: "+stsIn.getEsmdTransactionId());
+                                        System.out.println(" Document Unique ID: " + stsIn.getUniqueID());
+                                        paStChngTemp.setX12278submissionID(x12sub);
+                                        paStChngTemp.setTransType(stsIn.getTransType());
+                                        paStChngTemp.setResult(stsIn.getResult());
+                                        paStChngTemp.setStatus(stsIn.getStatus());
+                                        //paStChngTemp.setEsmdTransactionId(stsIn.getEsmdTransactionId());
+                                        //x12sub.setDocUnqID(paStslist.get(x).getUniqueID());
+
+                                        //commitContext2.addInstanceToCommit(paStChngTemp);
+                                        commitContext.addInstanceToCommit(paStChngTemp);
+                                        //datamanager.commit(paStChngTemp);
+
+                                        stsChngVal.setTrans_type(stsIn.getTransType());
+                                        stsChngVal.setResult(stsIn.getResult());
+                                        stsChngVal.setStatus(stsIn.getStatus());
+
+                                        try {
+                                            System.out.println("PA Status Change Create Time: " + paStChngTemp.getCreateTs());
+                                            //stsChngVal.setEsmd_transaction_id(stsIn.getEsmdTransactionId());
+                                            //DateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd HH:MM:SS:ss");
+                                        /*
+                                        String pattern = "yyyy-MM-dd HH:mm:ss.SSS";
+                                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+                                        String stdate = simpleDateFormat.format(paStChngTemp.getCreateTs());
+                                        System.out.println(stdate);
+                                        */
+
+                                            //DateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd HH:mm:SS.sss");2019-11-04 14:45:03.464
+                                            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+                                            String strDate = dateFormat.format(paStChngTemp.getCreateTs());
+                                            stsChngVal.setTime(strDate);
+                                        }
+                                        catch(Exception e)
+                                        {
+                                            e.printStackTrace();
+                                        }
+
+                                        x12StsChngJsonObjArrayList.add(stsChngVal);
+
+                                        retVal.setStaChngJsonObjs(x12StsChngJsonObjArrayList);
+
+
+                                        retVal.setTransType(stsIn.getTransType());
+                                        //retVal.setCall_error_description(stsIn.getStatus());
+                                        //retVal.setError_code_context(stsIn.getResult());
+
+                                        //return retVal;
+                                    } catch (Exception e) {
+                                        System.out.println("error occured");
+                                        retVal.setStatus("SUCCESS");
+                                        retVal.setTransType(stsIn.getTransType());
+                                        retVal.setSUPP_DOC_MESSAGE(stsIn.getResult());
+                                        retVal.setCall_error_code("4");
+                                        retVal.setCall_error_description(e.getMessage());
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                            }catch(Exception e)
+                                {
+                                    System.out.println("error occured");
+                                    retVal.setCall_error_code("4");
+                                    retVal.setCall_error_description(e.getMessage());
+                                    retVal.setTransType(statsInfoIt.next().getTransType());
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    catch(Exception e)
+                    {
+                        System.out.println("error occured");
+                        retVal.setCall_error_code("4");
+                        retVal.setCall_error_description(e.getMessage());
+                        retVal.setTransType(x12278subStatus.getTransType());
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+
+            else if (status == null && status.isEmpty()) {
+                x12sub.setStatus("Server Down");
+                retVal.setStatus("Server Down");
+                System.out.println("status is null");
+                //return retVal;
+            }
+            datamanager.commit(commitContext);
+        }
+        catch(Exception e)
+        {
+            System.out.println("error occured");
+            e.printStackTrace();
+            retVal.setCall_error_code("4");
+            retVal.setCall_error_description(e.getMessage());
+        }
+
+        datamanager.commit(x12sub);
+
+    }
+
+
+    // End of New code
+
+    //Creating HashTable from provided EXCEL ( .xlsx and .xls ) SpreedSheet File
+    protected Hashtable<String, String> createHashTable(File file) {
+
+        System.out.println("Inside HashTable");
+        FileInputStream fileIn = null;
+        Workbook workbook = null;
+        boolean bError = false;
+        try {
+            System.out.println("Inside Try HashTable");
+            fileIn = new FileInputStream(file);
+            //Workbook workbook = WorkbookFactory.create(file,"x12278pwd");
+            workbook = WorkbookFactory.create(file);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            DataFormatter dataFormatter = new DataFormatter();
+
+            // 1. You can obtain a rowIterator and columnIterator and iterate over them
+            System.out.println("\n\nIterating over Rows and Columns using Iterator\n");
+            Iterator<Row> rowIterator = sheet.rowIterator();
+            while (rowIterator.hasNext()) {
+                Row row = rowIterator.next();
+
+                // Now let's iterate over the columns of the current row
+                Iterator<Cell> cellIterator = row.cellIterator();
+
+                int count = 0;
+                String key = "", value = "";
+                while (cellIterator.hasNext()) {
+                    Cell cell = cellIterator.next();
+                    String cellValue = dataFormatter.formatCellValue(cell);
+                    String trimmerVal = cellValue.trim();
+                    //    System.out.print(trimmerVal + "\t");
+                    if (count == 0) {
+                        key = trimmerVal;
+                    } else {
+                        value = trimmerVal;
+                    }
+                    count++;
+                }
+                if (!value.equals("")) {
+                    inputKey.put(key, value);
+                    System.out.println("key is: " + key + "value is: " + value);
+                }
+            }
+
+            workbook.close();
+            fileIn.close();
+
+            System.out.println("End of Hash Table Creation");
+        } catch (FileNotFoundException e) {
+            bError = true;
+            e.printStackTrace();
+        } catch (IOException e) {
+            bError = true;
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            bError = true;
+            e.printStackTrace();
+        } catch (Exception e) {
+            bError = true;
+            e.printStackTrace();
+            System.out.println(e.getMessage());
+        }
+        if (bError) {
+            System.out.println("After Exception:");
+            System.out.println("-------------------");
+            try {
+                if (workbook != null) {
+                    workbook.close();
+                }
+
+                if (fileIn != null || fileIn.available() > 0) {
+                    fileIn.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return inputKey;
+    }
+
+
+    @RequestMapping(value="/x12278submission/{id}", method= GET)
+    public @ResponseBody
+    X12278SubmissionGetStatusRespModel PostX12278Submission(@PathVariable Long id) {
+        X12278SubmissionGetStatusRespModel retVal = new X12278SubmissionGetStatusRespModel();
+
+        retVal.setSubmission_id(id.toString());
+        X12278Submission x12278sub = null;
+        try {
+            x12278sub = datamanager.load(X12278Submission.class).id(id).view("x12278Submission-view").one();
+        }catch(Exception e){
+            retVal.setCall_error_code("2");
+            retVal.setCall_error_description("No records found for the X12278Submission Id provided");
+            return retVal;
+        }
+        if(x12278sub == null){
+            retVal.setCall_error_code("2");
+            retVal.setCall_error_description("No records found for the X12278Submission Id provided");
+            return retVal;
+        }
+
+        retVal.setStatus(x12278sub.getStatus());
+        retVal.setDocument_submission_status(x12278sub.getSuppDocMessage());
+
+        //InCase of Errors
+        Iterator<PAError> errorIterator ;
+        if(x12278sub.getPaError() != null) {
+            errorIterator = x12278sub.getPaError().iterator();
+            ArrayList<X12278ErrorJsonObject> errorJsonObjectArrayList = new ArrayList<>();
+            while(errorIterator.hasNext()){
+                PAError errTemp = errorIterator.next();
+                X12278ErrorJsonObject errRetVal = new X12278ErrorJsonObject();
+                errRetVal.setError_code(errTemp.getErrorCode());
+                errRetVal.setSeverity(errTemp.getSeverity());
+                errRetVal.setError_context(errTemp.getCodeContext());
+                errRetVal.setError_description(errTemp.getDescription());
+                //errRetVal.setError_description(errTemp.getError());
+                errRetVal.setEsmd_transaction_id(errTemp.getEsmdTransactionId());
+                errRetVal.setTrans_type(errTemp.getTransType());
+                errorJsonObjectArrayList.add(errRetVal);
+            }
+            retVal.setErrors(errorJsonObjectArrayList);
+        }
+
+        //InCase of Successfull submission
+        Iterator<PAStatusChange> statusChangeIterator ;
+        if(x12278sub.getPaStatusChange() != null) {
+
+            retVal.setDocument_unique_id(x12278sub.getDocUnqID());
+            retVal.setEsmd_transaction_id(x12278sub.getEsmdTransactionId());
+
+            statusChangeIterator = x12278sub.getPaStatusChange().iterator();
+            ArrayList<X12278StatusChangeJsonObject> statusChangesJsonObjectArrayList = new ArrayList<>();
+            while(statusChangeIterator.hasNext()){
+                PAStatusChange stchngTemp = statusChangeIterator.next();
+                X12278StatusChangeJsonObject statchngRetVal = new X12278StatusChangeJsonObject();
+                statchngRetVal.setEsmd_transaction_id(stchngTemp.getEsmdTransactionId());
+                statchngRetVal.setStatus(stchngTemp.getStatus());
+                statchngRetVal.setResult(stchngTemp.getResult());
+                statchngRetVal.setTrans_type(stchngTemp.getTransType());
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+                String strDate = dateFormat.format(stchngTemp.getCreateTs());
+                statchngRetVal.setTime(strDate);
+                statusChangesJsonObjectArrayList.add(statchngRetVal);
+            }
+            retVal.setStatus_changes(statusChangesJsonObjectArrayList);
+        }
+
+        return retVal;
+    }
+    //End of Get Method
+
+
+
 }
 

@@ -72,6 +72,9 @@ configure(globalModule) {
             runtime('org.glassfish.jaxb:jaxb-runtime:2.3.1')
         }
         runtime 'org.reactivestreams:reactive-streams:1.0.1'
+        compile('org.apache.poi:poi-ooxml:3.16')
+        
+        
     }
 
     entitiesEnhancing {
@@ -137,19 +140,23 @@ configure(coreModule) {
     }
 
     task createDb(dependsOn: assembleDbScripts, description: 'Creates local database', type: CubaDbCreation) {
+        //dbms = 'Mysql'
         dbms = 'mysql'
         host = 'localhost:3306'
         dbName = 'rioc'
         dbUser = 'root'
+        //dbPassword = 'root'
         dbPassword = 'mettles'
         connectionParams = '?allowPublicKeyRetrieval=true&useSSL=false&allowMultiQueries=true&serverTimezone=UTC'
     }
 
     task updateDb(dependsOn: assembleDbScripts, description: 'Updates local database', type: CubaDbUpdate) {
+        //dbms = 'Mysql'
         dbms = 'mysql'
         host = 'localhost:3306'
         dbName = 'rioc'
         dbUser = 'root'
+        //dbPassword = 'root'
         dbPassword = 'mettles'
         connectionParams = '?allowPublicKeyRetrieval=true&useSSL=false&allowMultiQueries=true&serverTimezone=UTC'
     }

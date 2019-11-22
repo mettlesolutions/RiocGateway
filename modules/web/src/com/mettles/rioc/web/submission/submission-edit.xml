@@ -42,31 +42,31 @@
         <scrollBox id="scrollBox" spacing="true">
             <form id="form" dataContainer="submissionDc">
                 <column width="250px">
-                    <textField id="patientAddressZipField" property="patientAddressZip" visible="false"/>
-                    <textField id="lastNameField" property="lastName"  visible="false"/>
+                    <!--<textField id="patientAddressZipField" property="patientAddressZip" visible="false"/>
+                    <textField id="lastNameField" property="lastName"  visible="false"/> -->
                     <lookupPickerField id="intendedRecepientField" optionsContainer="intendedRecepientsDc"
                                        property="intendedRecepient">
                         <actions>
                             <action id="lookup" type="picker_lookup"/>
                         </actions>
                     </lookupPickerField>
-                    <textArea id="messageField" property="message" rows="5"  visible="false"/>
+                    <!--<textArea id="messageField" property="message" rows="5"  visible="false"/>
                     <checkBox id="isNonClaimantField" property="isNonClaimant"  visible="false"/>
                     <textField id="firstNameField" property="firstName"  visible="false"/>
                     <checkBox id="hasFirstWitnessSignatureField" property="hasFirstWitnessSignature"  visible="false"/>
-                    <textField id="middleNameField" property="middleName"  visible="false"/>
+                    <textField id="middleNameField" property="middleName"  visible="false"/> -->
                     <textArea id="commentsField" property="comments" rows="5"/>
-                    <dateField id="dateOfBirthField" property="dateOfBirth"  visible="false"/>
+                    <!--<dateField id="dateOfBirthField" property="dateOfBirth"  visible="false"/>
                     <checkBox id="isSampleField" property="isSample"  visible="false"/>
-                    <textField id="patientAddressCityField" property="patientAddressCity" visible="false"/>
+                    <textField id="patientAddressCityField" property="patientAddressCity" visible="false"/> -->
                     <lookupField id="authorTypeField" property="authorType"/>
-                    <textField id="phonenumberField" property="phonenumber"  visible="false"/>
+                    <!--<textField id="phonenumberField" property="phonenumber"  visible="false"/>
                     <checkBox id="hasSecondWitnessSignatureField" property="hasSecondWitnessSignature"  visible="false"/>
                     <textField id="patientAddressField" property="patientAddress"  visible="false"/>
                     <textField id="socialSecurityNumberField" property="socialSecurityNumber"  visible="false"/>
-                    <textField id="patientAddressStreetField" property="patientAddressStreet"  visible="false"/>
+                    <textField id="patientAddressStreetField" property="patientAddressStreet"  visible="false"/> -->
                     <textField id="authorNPIField" property="authorNPI"/>
-                    <checkBox id="hasSignatureOfPatientField" property="hasSignatureOfPatient"  visible="false"/>
+                    <!--<checkBox id="hasSignatureOfPatientField" property="hasSignatureOfPatient"  visible="false"/>-->
                     <textField id="stageField" property="stage" editable="false"/>
                     <textField id="titleField" property="title"/>
                     <lookupPickerField id="purposeOfSubmissionField" optionsContainer="purposeOfSubmissionsDc"
@@ -77,8 +77,8 @@
                     </lookupPickerField>
                     <textField id="esMDClaimIDField" property="esMDClaimID" caption = "Claim ID"/>
                     <textField id="statusField" property="status"  editable="false"/>
-                    <textField id="patientAddressStateField" property="patientAddressState"  visible="false"/>
-                    <checkBox id="hasMessageField" property="hasMessage"  visible="false"/>
+                    <!--<textField id="patientAddressStateField" property="patientAddressState"  visible="false"/>
+                    <checkBox id="hasMessageField" property="hasMessage"  visible="false"/> -->
                     <textField id="esmdCaseIdField" property="esmdCaseId" caption = "Case ID" />
                     <textField id="esmdTransactionIdField" property="esmdTransactionId" editable="false" caption = "Transaction ID"/>
                     <textField id="highestSpiltNoField" property="highestSpiltNo"  visible="false"/>

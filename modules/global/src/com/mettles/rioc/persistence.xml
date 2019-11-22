@@ -14,5 +14,11 @@
         <class>com.mettles.rioc.entity.Providers</class>
         <class>com.mettles.rioc.entity.State</class>
         <class>com.mettles.rioc.entity.Address</class>
+        <class>com.mettles.rioc.entity.X12278Submission</class>
+        <class>com.mettles.rioc.entity.PADocument</class>
+        <class>com.mettles.rioc.entity.PAError</class>
+        <class>com.mettles.rioc.entity.PANotificationSlot</class>
+        <class>com.mettles.rioc.entity.PAStatusChange</class>
+        <class>com.mettles.rioc.entity.Test2</class>
     </persistence-unit>
 </persistence>

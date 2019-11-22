@@ -6,5 +6,6 @@
         <item screen="rioc_HIHConfiguration.browse"/>
         <item screen="rioc_Submission.browse"/>
         <item screen="rioc_providers.browse"/>
+        <item screen="rioc_X12278Submission.browse"/>
     </menu>
 </menu-config>

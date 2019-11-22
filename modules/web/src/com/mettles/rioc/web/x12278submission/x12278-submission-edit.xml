@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/screen/window.xsd"
+        caption="msg://editorCaption"
+        focusComponent="form"
+        messagesPack="com.mettles.rioc.web.x12278submission">
+    <data>
+        <instance id="x12278SubmissionDc"
+                  class="com.mettles.rioc.entity.X12278Submission"
+                  view="x12278Submission-view">
+            <loader id="x12278SubmissionsDl"/>
+            <collection id="paDocumentDc" property="paDocument"/>
+            <collection id="paErrorDc" property="paError"/>
+            <collection id="paNotificationSlotDc" property="paNotificationSlot"/>
+            <collection id="paStatusChangeDc" property="paStatusChange"/>
+        </instance>
+        <collection id="intendedRecepientsDc" class="com.mettles.rioc.entity.Recepient" view="IntendedRecepient">
+            <loader id="intendedRecepientsLc">
+                <query>
+                    <![CDATA[select e from rioc_Recepient e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="scrollBox" spacing="true">
+        <scrollBox id="scrollBox" spacing="true">
+        <form id="form" dataContainer="x12278SubmissionDc">
+            <column width="250px">
+                <lookupPickerField id="intendedRecepientField" optionsContainer="intendedRecepientsDc"
+                                   property="intendedRecepient">
+                    <actions>
+                        <action id="lookup" type="picker_lookup"/>
+                    </actions>
+                </lookupPickerField>
+                <textField id="statusField" property="status" editable="false" caption="PA Status"/>
+                <textField id="esmdTransactionIdField" property="esmdTransactionId" editable="false" caption="ESMD Transaction ID"/>
+                <textField id="suppDocMessageField" property="suppDocMessage" editable="false" caption="Document Submission Status"/>
+                <textField id="docUnqIDField" property="docUnqID" editable="false" caption="Document Unique ID"/>
+                <textField id="suppDocesmdTransactionIdField" property="suppDocesmdTransactionId" editable="false" caption="Document ESMD Transaction ID"/>
+                <textField id="paMessageField" property="paMessage" editable="false" caption="PA Message"/>
+                <textField id="paUTNField" property="paUTN" editable="false" caption="PA UTN"/>
+            </column>
+        </form>
+
+        <groupBox id="paDocumentBox" caption="msg://com.mettles.rioc.entity/X12278Submission.paDocument">
+            <table id="paDocumentTable" dataContainer="paDocumentDc" width="100%" height="200px">
+                <actions>
+                    <action id="create" type="create"/>
+                    <action id="edit" type="edit"/>
+                    <action id="remove" type="remove"/>
+                </actions>
+                <columns>
+                    <column id="title"/>
+                    <column id="language"/>
+                    <column id="comments"/>
+                    <column id="filename"/>
+                    <!--<column id="splitNumber"/> -->
+                    <column id="fileDescriptor"/>
+                </columns>
+                <buttonsPanel>
+                    <button action="paDocumentTable.create"/>
+                    <button action="paDocumentTable.edit"/>
+                    <button action="paDocumentTable.remove"/>
+                </buttonsPanel>
+            </table>
+        </groupBox>
+        <tabSheet>
+        <tab id="tab1"
+             caption="Information"
+             margin="true"
+             spacing="true">
+            <groupBox id="paErrorBox" caption="PAError">
+                <table id="paErrorTable" dataContainer="paErrorDc" width="100%" height="200px" editable="false">
+                    <columns>
+                        <column id="errorCode"/>
+                        <column id="severity"/>
+                        <column id="codeContext"/>
+                        <column id="description"/>
+                        <column id="esmdTransactionId"/>
+                        <column id ="transType"/>
+                    </columns>
+                </table>
+            </groupBox>
+
+            <groupBox id="paStatusChangeBox" caption="PAStatus change">
+                <table id="paStatusChangeTable" dataContainer="paStatusChangeDc" width="100%" height="200px" editable="false">
+                    <columns>
+                        <column id="status"/>
+                        <column id="createTs"/>
+                        <column id="result"/>
+                        <!--<column id="splitInformation"/> -->
+                        <column id="esmdTransactionId"/>
+                        <column id ="transType"/>
+                    </columns>
+                </table>
+            </groupBox>
+        </tab>
+
+            <tab id="tab2"
+                 caption="NotificationDetails"
+                 margin="true"
+                 spacing="true">
+                <groupBox id="paNotificationSlotBox"
+                          caption="PANotification slot">
+                    <table id="paNotificationSlotTable" dataContainer="paNotificationSlotDc" width="100%" height="200px" editable="false">
+                        <columns>
+                            <column id="field"/>
+                            <column id="value"/>
+                            <!--<column id="splitInformation"/>-->
+                            <column id="createTs"/>
+                            <column id ="transType"/>
+                        </columns>
+                    </table>
+                </groupBox>
+            </tab>
+        </tabSheet>
+
+        </scrollBox>
+        <hbox id="editActions" spacing="true">
+            <button action="windowCommitAndClose"/>
+            <button action="windowCommit"/>
+            <button action="windowClose"/>
+        </hbox>
+
+        <vbox spacing="true" margin="true">
+            <upload id="uploadFileField"
+                    fileStoragePutMode="MANUAL"
+                    showFileName="true"
+                    showClearButton="true"/>
+        </vbox>
+
+        <hbox spacing="true" margin="true">
+            <button id="btnparse" width="110px" caption="Parse" disableOnClick="true" enable="false" invoke="onBtnparseClick"/>
+            <button id="btnsubmit" width="110px" caption="Submit" disableOnClick="true" enable="false" invoke="onBtnsubmitClick"/>
+        </hbox>
+
+    </layout>
+</window>
+
+
+
+
