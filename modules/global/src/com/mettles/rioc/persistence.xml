@@ -19,6 +19,5 @@
         <class>com.mettles.rioc.entity.PAError</class>
         <class>com.mettles.rioc.entity.PANotificationSlot</class>
         <class>com.mettles.rioc.entity.PAStatusChange</class>
-        <class>com.mettles.rioc.entity.Test2</class>
     </persistence-unit>
 </persistence>

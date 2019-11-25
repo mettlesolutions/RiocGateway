@@ -255,23 +255,7 @@ create table RIOC_ADDRESS (
     primary key (ID)
 )^
 -- end RIOC_ADDRESS
--- begin RIOC_TEST2
-create table RIOC_TEST2 (
-    ID varchar(32),
-    VERSION integer not null,
-    CREATE_TS datetime(3),
-    CREATED_BY varchar(50),
-    UPDATE_TS datetime(3),
-    UPDATED_BY varchar(50),
-    DELETE_TS datetime(3),
-    DELETED_BY varchar(50),
-    --
-    title varchar(255),
-    comments varchar(512),
-    --
-    primary key (ID)
-)^
--- end RIOC_TEST2
+
 -- begin RIOC_STATE
 create table RIOC_STATE (
     ID varchar(32),
