@@ -124,7 +124,8 @@ public class X12278SubmissionServiceBean implements X12278SubmissionService {
                                 //datamanager.commit(commitContext);
 
                             }
-                        } else {
+                        }
+                        else {
                             System.out.println("SuccessFull Submission from Shared Systems:");
                             System.out.println("---------------------------------------------");
                             System.out.println("PA Message: "+x12278respn.getMessage());
@@ -136,6 +137,10 @@ public class X12278SubmissionServiceBean implements X12278SubmissionService {
                             //}//End of Code changes
                             try{
                                 if (x12278respn.getConsolidated_hcr().getUtn_value() != null){
+
+                                    x12278SubServSts.setPaMessage(x12278respn.getConsolidated_hcr().getAction_code());
+                                    x12278SubParam.setPaMessage(x12278respn.getConsolidated_hcr().getAction_code());
+                                    System.out.println("PA Message: "+x12278respn.getConsolidated_hcr().getAction_code());
                                     System.out.println("PA UTN: "+x12278respn.getConsolidated_hcr().getUtn_value());
                                     x12278SubParam.setPaUTN(x12278respn.getConsolidated_hcr().getUtn_value());
                                     x12278SubServSts.setPaUTN(x12278respn.getConsolidated_hcr().getUtn_value());
@@ -160,15 +165,16 @@ public class X12278SubmissionServiceBean implements X12278SubmissionService {
 
                                 try{
 
-                                    if (hltCareRvwInfIt.next().getService_code() != null)
+                                    HealthCareReviewInfo hltCareRvwInfItIn = hltCareRvwInfIt.next();
+                                    if (hltCareRvwInfItIn.getService_code() != null)
                                     {
                                         System.out.println("X12278Submission Service Success Scenerio");
                                         System.out.println("Health Care Review Info");
                                         System.out.println("------------------------------------------");
-                                        System.out.println("Health Care Review Info Service Code: Value: " + hltCareRvwInfIt.next().getService_code());
-                                        System.out.println("Health Care Review Info Reason Code: Field: " + hltCareRvwInfIt.next().getAction_code());
-                                        //System.out.println("Health Care Review Info Date: "+hltCareRvwInfIt.next().getStart_Date()); Store in PA Notification SLot Entity -> field "notes"
-                                        //System.out.println("Health Care Review Info Date: "+hltCareRvwInfIt.next().getEnd_Date()); Store in PA Notification SLot Entity -> field "notes"
+                                        System.out.println("Health Care Review Info Service Code: Value: " + hltCareRvwInfItIn.getService_code());
+                                        System.out.println("Health Care Review Info Action Code: Field: " + hltCareRvwInfItIn.getAction_code());
+                                        //System.out.println("Health Care Review Info Date: "+hltCareRvwInfItIn.getStart_Date()); Store in PA Notification SLot Entity -> field "notes"
+                                        //System.out.println("Health Care Review Info Date: "+hltCareRvwInfItIn.getEnd_Date()); Store in PA Notification SLot Entity -> field "notes"
                                         //CommitContext commitContext = new CommitContext();
 
 
@@ -182,16 +188,16 @@ public class X12278SubmissionServiceBean implements X12278SubmissionService {
                                         paNotiSltTemp.setField("Health Care Info Reason");
                                          */
 
-                                        paNotiSltTemp.setValue(hltCareRvwInfIt.next().getService_code());
-                                        if (hltCareRvwInfIt.next().getReason_code() != null)
+                                        paNotiSltTemp.setValue(hltCareRvwInfItIn.getService_code());
+                                        if (hltCareRvwInfItIn.getReason_code() != null)
                                         {
-                                            paNotiSltTemp.setField(hltCareRvwInfIt.next().getAction_code()+"::"+hltCareRvwInfIt.next().getReason_code());
+                                            paNotiSltTemp.setField(hltCareRvwInfItIn.getAction_code()+"::"+hltCareRvwInfItIn.getReason_code());
                                         }
                                         else {
-                                            paNotiSltTemp.setField(hltCareRvwInfIt.next().getAction_code());
+                                            paNotiSltTemp.setField(hltCareRvwInfItIn.getAction_code());
                                         }
 
-                                        //paNotiSltTemp.setNotes(hltCareRvwInfIt.next().getStart_Date or .getEnd_Date);
+                                        //paNotiSltTemp.setNotes(hltCareRvwInfItIn.getStart_Date or .getEnd_Date);
 
                                         //END of New Code
 
