@@ -107,17 +107,19 @@ public class X12278SubmissionServiceBean implements X12278SubmissionService {
                             Iterator<AAAErrorInfo> aaaErrinfoIt = aaaErrList.iterator();
 
                             while (aaaErrinfoIt.hasNext()) {
-                                System.out.println("AAA Error Code: " + aaaErrinfoIt.next().getError_code());
-                                System.out.println("AAA Error String: " + aaaErrinfoIt.next().getError_string());
-                                System.out.println("AAA Error Follow UP Action: " + aaaErrinfoIt.next().getFollowup_action());
-                                System.out.println("AAA Error Segment Info: " + aaaErrinfoIt.next().getSegment_info());
+                                AAAErrorInfo aaaErrInfoItIn = aaaErrinfoIt.next();
+
+                                System.out.println("AAA Error Code: " + aaaErrInfoItIn.getError_code());
+                                System.out.println("AAA Error String: " + aaaErrInfoItIn.getError_string());
+                                System.out.println("AAA Error Follow UP Action: " + aaaErrInfoItIn.getFollowup_action());
+                                System.out.println("AAA Error Segment Info: " + aaaErrInfoItIn.getSegment_info());
 
                                 //CommitContext commitContext = new CommitContext();
                                 PAError paErrTemp = datamanager.create(PAError.class);
-                                paErrTemp.setErrorCode(aaaErrinfoIt.next().getError_code());
-                                paErrTemp.setCodeContext(aaaErrinfoIt.next().getError_string());
-                                paErrTemp.setDescription(aaaErrinfoIt.next().getFollowup_action());
-                                paErrTemp.setSeverity(aaaErrinfoIt.next().getSegment_info());
+                                paErrTemp.setErrorCode(aaaErrInfoItIn.getError_code());
+                                paErrTemp.setCodeContext(aaaErrInfoItIn.getError_string());
+                                paErrTemp.setDescription(aaaErrInfoItIn.getFollowup_action());
+                                paErrTemp.setSeverity(aaaErrInfoItIn.getSegment_info());
                                 paErrTemp.setX12278submissionID(x12278SubParam);
                                 paErrTemp.setTransType("X12 Transaction");
                                 commitContext.addInstanceToCommit(paErrTemp);
